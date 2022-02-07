@@ -7,7 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
-from chromedriver_py import binary_path
+from webdriver_manager.chrome import ChromeDriverManager
 import json
 import time
 
@@ -24,8 +24,7 @@ class Uploader:
     if headless:
       options.add_argument("--headless")
     options.add_argument("--window-size=1280,800")
-    service = Service(binary_path)
-    self.browser = webdriver.Chrome(options=options, service=service)
+    self.browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     
   def inject_cookies(self, cookies_path: str):
     """
