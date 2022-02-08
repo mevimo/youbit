@@ -11,6 +11,7 @@ import os
 import pyAesCrypt
 import json
 import gzip
+from zipfile import ZipFile
 
 from youbit.upload import Uploader
 from youbit.encode import apply_ecc, make_frames, make_video
@@ -39,7 +40,7 @@ class Encoder:
                         break
                     md5.update(data)
                 self._metadata = {
-                    'MD5': str(md5.hexdigest()),
+                    'original_MD5': str(md5.hexdigest()),
                     'original_ext': str(self._original.suffix)
                     }
         else:
@@ -71,7 +72,7 @@ class Encoder:
         par_parity_size, par_recovery_size = make_frames(self.tempdir, bpp)
         self._metadata['par_parity_size'] = par_parity_size
         self._metadata['par_recovery_size'] = par_recovery_size
-        make_video(self.tempdir, fps)
+        self._mp4 = make_video(self.tempdir, fps)
         self._metadata['bpp'] = bpp
         self._metadata['fps'] = fps
 
@@ -85,19 +86,32 @@ class Encoder:
         uploader = Uploader(headless)
         uploader.inject_cookies(cookies_path)
         self.url = uploader.upload(
-            str(self.__tempdir) + '/yb-output.mp4',
+            str(self._mp4) + '/yb-output.mp4',
             'titlename', json.dumps(self._metadata),
             callback, headless
             )
         self._handle_exit()
 
-    def save(self, path, readme: bool = True):
+    def save(self, path: Union[str, Path], readme: bool = True):
         """
         Saves the generated video and metadata for manual upload.
         Set readme argument to False to not save a README.txt file.
         """
         ##TODO: save video, metadata.json, and optional readme.txt AND ZIP IT
         ##TODO: check if path given is directory, in which case raise error or use default name, idk yet
+        if isinstance(path, PurePath):
+            location = path.parent / (path.name + '.zip')
+        else:
+            location = Path(path).parent / (Path(path).name + '.zip')
+        if self._original.exists():
+            if self._original.is_dir():
+                raise ValueError('Please specify a filename too, not just a directory.')
+            readme_location = Path(__file__).parents[1].resolve() / 'data' / 'README_upload.txt'
+            with ZipFile(location, 'w') as zip:
+                shutil.copy(readme_location, zip)
+                json.dump(self._metadata, zip)
+            
+
         self._handle_exit()
     
     def _handle_exit(self) -> None:
@@ -150,7 +164,7 @@ class Decoder:
                 self._yt = YouTube(self.url)
                 self._stream = self.yt.streams.filter(adaptive=True, type='video')
                 self._stream = self.stream.order_by('resolution').last() ##TODO: get 1080p secifically instead of highest res, in case that the video has not finished processing yet
-                self._metadata = json.loads(self.yt.description) 
+                self._metadata = json.loads(self.yt.description.strip()) 
             except:
                 raise ValueError('Incorrect URL or video not available.') #TODO: check why VideoUnavailable wasnt recognized as exception, low priority
 

@@ -74,7 +74,7 @@ def extract_binary(tempdir, par_parity_size: int, par_recovery_size: int, bpp: i
 
 def remove_ecc(tempdir):
     ##TODO: switch to par2.exe binary 
-    subprocess.Popen(f'par2deep-cli -q -clean -dir {str(tempdir)}', shell=True).wait()
+    subprocess.Popen(f'par2deep-cli -q -clean -dir {str(tempdir)}', shell=True).wait() #wont work becauseworking directory of subprocess is not yet set to the youbit/youbit
 
     for file in tempdir.glob('*.par2'):
         file.unlink()
