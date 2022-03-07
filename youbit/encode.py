@@ -22,7 +22,7 @@ def apply_ecc(tempdir: Path, pc: int) -> None:
     # in this application.
     # I might have to consider a non library multi-platform application with CLI support,
     # just ship youbit with the binaries, and interface with it via subprocess.Popen()...
-    ## TODO: switch to par2.exe control via subprocess, package youbit with bianries for linux and windows
+    ## TODO: switch to par2.exe control via subprocess, package youbit with binaries for linux and windows
     par = par2deep(str(tempdir))
     par.args['quiet'] = True
     par.args['percentage'] = pc
@@ -32,7 +32,8 @@ def apply_ecc(tempdir: Path, pc: int) -> None:
 
 
 def make_frames(tempdir: Path, bpp: int) -> tuple:
-    ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop
+    ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop. Multithrading
+    ## NOTE: Mumtithreading?
     # Right now this uses an insane amount of ram, roughly equal to the filesize,
     # since it is completely saved in memory as a contiguous numpy array.
     for file in tempdir.iterdir():
@@ -68,14 +69,12 @@ def make_frames(tempdir: Path, bpp: int) -> tuple:
             dir = tempdir / f'frame{i}.png'
             cv2.imwrite(str(dir), frame.reshape(1080,1920))
             del frame
-    elif bpp == 2:
-        pass ##TODO
-    elif bpp == 3:
-        mapping = np.array([0,144,80,208,48,176,112,255])
+    elif bpp == 2 or bpp == 3:
+        mapping = np.array([0,144,80,208,48,176,112,255]) # not tested if this mapping also works with a bpp of 2
         for i in range(framecount):
-            start = framesize * i
+            start = framesize
             stop = start + framesize
-            frame = np.unpackbits(bin[start:stop]).reshape(-1,3)
+            frame = np.unpackbits(bin[start:stop]).reshape(-1,bpp)
             frame = np.packbits(frame, axis=1, bitorder='little').ravel()
             frame = mapping[frame].reshape(1080,1920)
             dir = tempdir / f'frame{i}.png'
