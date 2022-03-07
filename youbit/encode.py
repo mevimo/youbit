@@ -84,6 +84,7 @@ def make_frames(tempdir: Path, bpp: int) -> tuple:
         raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
     return par_parity_size, par_recovery_size
 
+
 def make_video(tempdir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: int = 53453453 blahlbah options
     ## TODO: replace with ffmpy wrapper lib
     output_path = tempdir / 'yb-output.mp4'
@@ -96,3 +97,4 @@ def make_video(tempdir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrat
         )
     subprocess.Popen(cmd, shell=True).wait()
     return output_path
+    
