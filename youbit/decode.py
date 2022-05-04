@@ -17,18 +17,21 @@ def extract_frames(tempdir) -> None:
 
 
 def extract_binary(tempdir, par_parity_size: int, par_recovery_size: int, bpp: int) -> None:
+    '''assumes frameé".png naming blahblha'''
     ## TODO: extract key frames only for much less error rate, but I have to figure out YouTube's GOP structure first
     # 12th frame is keyframe duplicate, as well as 29th frame and 46th frame... distance of 17 frames with first dupe-key-frame at 12?
+    # my 1fps is being transformed into a higher fps, maybe thats why?
     # might be a coincidental correlation....
     frame_paths = sorted(
         tempdir.glob('*.png'),
-        key=os.path.getmtime
+        key = lambda p : int(p.stem[5:])
+        # key=os.path.getmtime # maybe not a good idea, key should prob be 
         )
     frames = []
 
     if bpp == 1:
         for f in frame_paths:
-            if f.name in ('frame1.png', 'frame2.png'):
+            if f.name in ('frame1.png', 'frame2.png'): ## code duplication, remove  from frames var before this code block
                 continue
             img = cv2.imread(str(f), cv2.IMREAD_GRAYSCALE)
             pixels = np.array(img, dtype=np.uint8)
@@ -44,9 +47,7 @@ def extract_binary(tempdir, par_parity_size: int, par_recovery_size: int, bpp: i
         for f in frame_paths:
             if f.name in ('frame1.png', 'frame2.png'):
                 continue
-            img = cv2.imread(str(f), cv2.IMREAD_GRAYSCALE)
-            pixels = np.array(img, dtype=np.uint8)
-            del img
+            pixels = cv2.imread(str(f), cv2.IMREAD_GRAYSCALE)
             pixels[pixels < 32] = 0 #000
             pixels[(pixels >= 32) & (pixels < 64)] = 1 #001
             pixels[(pixels >= 64) & (pixels < 96)] = 2 #010
