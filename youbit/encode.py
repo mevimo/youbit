@@ -4,9 +4,11 @@ import subprocess
 import numpy as np
 from pathlib import Path
 from par2deep.par2deep import par2deep
+import shutil
+import os
 
 
-def apply_ecc(tempdir: Path, pc: int) -> None:
+def apply_ecc(tempdir: Path) -> tuple[Path, int, int]:
     """
     Will create a parity file, and a file with recovery blocks in the given directory,
     using par2.
@@ -22,7 +24,7 @@ def apply_ecc(tempdir: Path, pc: int) -> None:
     # in this application.
     # I might have to consider a non library multi-platform application with CLI support,
     # just ship youbit with the binaries, and interface with it via subprocess.Popen()...
-    ## TODO: switch to par2.exe control via subprocess, package youbit with binaries for linux and windows
+    ## TODO: switch to par2.dll control via ctypes, package youbit with binaries for linux and windows
     par = par2deep(str(tempdir))
     par.args['quiet'] = True
     par.args['percentage'] = pc
@@ -30,26 +32,48 @@ def apply_ecc(tempdir: Path, pc: int) -> None:
     par.check_state()
     for _ in par.execute(): pass
 
-
-def make_frames(tempdir: Path, bpp: int) -> tuple:
-    ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop. Multithrading
-    ## NOTE: Mumtithreading?
-    # Right now this uses an insane amount of ram, roughly equal to the filesize,
-    # since it is completely saved in memory as a contiguous numpy array.
     for file in tempdir.iterdir():
         if 'vol' in file.name and file.suffix == '.par2':
-            par_recovery = np.fromfile(str(file), dtype=np.uint8)
-            file.unlink()
+            par_recovery = file
+            par_recovery_size = os.path.sizeof(par_recovery)
         elif file.suffix == '.par2':
-            par_parity = np.fromfile(str(file), dtype=np.uint8)
-            file.unlink()
+            par_parity = file
+            par_parity_size = os.path.sizeof(par_parity)
         else:
-            par_main = np.fromfile(str(file), dtype=np.uint8)
-            file.unlink()
-    par_parity_size = par_parity.size   
-    par_recovery_size = par_recovery.size
-    bin = np.concatenate((par_parity, par_recovery, par_main))
-    del par_parity, par_recovery, par_main
+            par_main = file
+    with open(par_parity, 'ab') as parity, open(par_recovery, 'rb') as recovery, open(par_main, 'rb') as main:
+        # We want it in order; parity -> recovery -> main
+        shutil.copyfileobj(recovery, parity)
+        shutil.copyfileobj(main, parity)
+    file = par_parity.rename(par_parity.parent / 'file.bin')
+    par_recovery.unlink()
+    par_main.unlink()
+    return file, par_parity_size, par_recovery_size
+
+
+def make_frames(file: Path, bpp: int) -> None:
+    """
+    Takes Path to the file in question as an argument, and encodes
+    the binary information to a series of greyscale png images.
+    These images are saved to the directory of the given file,
+    using the ordered naming convention 'frame1.png'.
+    The given file is deleted.
+
+    paramter info and return info!!!!!!!!!!!!
+    """
+    ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop.
+    ## TODO: mulitprocessing
+    if bpp == 1:
+        mapping = np.array([0,255])
+    elif bpp == 2:
+        mapping = np.array([0,160,96,255])
+    elif bpp == 3:
+        mapping = np.array([0,144,80,208,48,176,112,255])
+    else:
+        raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
+
+    bin = np.fromfile(str(file), dtype=np.uint8)
+    tempdir = file.parent
 
     # NOTE: Trailing zero bytes on a gzip does not affect checksum of underlying file
     framesize = 259200 * bpp
@@ -60,42 +84,31 @@ def make_frames(tempdir: Path, bpp: int) -> tuple:
         del zeros
     framecount = bin.size // framesize
 
-    if bpp == 1:
-        for i in range(framecount):
-            start = framesize * i
-            stop = start + framesize
-            frame = np.unpackbits(bin[start:stop])
-            frame[frame != 0] = 255
-            dir = tempdir / f'frame{i}.png'
-            cv2.imwrite(str(dir), frame.reshape(1080,1920))
-            del frame
-    elif bpp == 2 or bpp == 3:
-        mapping = np.array([0,144,80,208,48,176,112,255]) # not tested if this mapping also works with a bpp of 2
-        for i in range(framecount):
-            start = framesize
-            stop = start + framesize
-            frame = np.unpackbits(bin[start:stop]).reshape(-1,bpp)
+    for i in range(framecount):
+        start = framesize * i
+        stop = start + framesize
+        frame = np.unpackbits(bin[start:stop]).reshape(-1,bpp)
+        if bpp > 1:
             frame = np.packbits(frame, axis=1, bitorder='little').ravel()
-            frame = mapping[frame].reshape(1080,1920)
-            dir = tempdir / f'frame{i}.png'
-            cv2.imwrite(str(dir), frame)
-            del frame
-    else:
-        raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
-    return par_parity_size, par_recovery_size
+        frame = mapping[frame].reshape(1080,1920)
+        dir = tempdir / f'frame{i}.png'
+        cv2.imwrite(str(dir), frame)
+        del frame
 
- 
-def make_video(tempdir: Path, fps: int = 1) -> Path: # losless or not option
+
+def make_video(dir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: int = 53453453 blahlbah options
     """
-    Given a directory, all ordered images with syntax 'frame1.png' will be used to assemble a video.
+    Takes a directory Path as argument, where it will look for
+    images with ordered naming scheme 'frame1.png', and create
+    a .mp4 video from them.
     """
-    ## TODO: replace with ffmpy wrapper lib low priority
-    output_path = tempdir / 'yb-output.mp4'
+    ## TODO: replace with ffmpy wrapper lib
+    output_path = dir / 'yb-output.mp4'
     cmd = (
         "ffmpeg -r {} -i {} -c:v libx265 -vf format=gray "
         "-x265-params lossless=1 -tune grain " 
         "-y {}".format(
-            fps, str(tempdir) + '/frame%d.png', 
+            fps, str(dir) + '/frame%d.png', 
             str(output_path))
         )
     subprocess.Popen(cmd, shell=True).wait()
