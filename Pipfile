@@ -10,8 +10,12 @@ opencv-python = "*"
 par2deep = "*"
 selenium = "*"
 webdriver-manager = "*"
+pytest = "*"
+yt-dlp = "*"
+chromedriver-autoinstaller = "*"
+browser-cookie3 = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.10"
+python_version = "3.9"

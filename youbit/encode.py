@@ -84,9 +84,12 @@ def make_frames(tempdir: Path, bpp: int) -> tuple:
         raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
     return par_parity_size, par_recovery_size
 
-
-def make_video(tempdir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: int = 53453453 blahlbah options
-    ## TODO: replace with ffmpy wrapper lib
+ 
+def make_video(tempdir: Path, fps: int = 1) -> Path: # losless or not option
+    """
+    Given a directory, all ordered images with syntax 'frame1.png' will be used to assemble a video.
+    """
+    ## TODO: replace with ffmpy wrapper lib low priority
     output_path = tempdir / 'yb-output.mp4'
     cmd = (
         "ffmpeg -r {} -i {} -c:v libx265 -vf format=gray "
