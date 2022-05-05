@@ -25,7 +25,7 @@ def extract_binary(tempdir, par_parity_size: int, par_recovery_size: int, bpp: i
     frame_paths = sorted(
         tempdir.glob('*.png'),
         key = lambda p : int(p.stem[5:])
-        # key=os.path.getmtime # maybe not a good idea, key should prob be 
+        # key=os.path.getmtime
         )
     frames = []
 

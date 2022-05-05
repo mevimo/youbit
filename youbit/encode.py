@@ -32,6 +32,7 @@ def apply_ecc(tempdir: Path) -> tuple[Path, int, int]:
     par.check_state()
     for _ in par.execute(): pass
 
+    # -----------------------------------------------------------
     for file in tempdir.iterdir():
         if 'vol' in file.name and file.suffix == '.par2':
             par_recovery = file
@@ -52,14 +53,20 @@ def apply_ecc(tempdir: Path) -> tuple[Path, int, int]:
 
 
 def make_frames(file: Path, bpp: int) -> None:
-    """
-    Takes Path to the file in question as an argument, and encodes
+    """Takes Path to the file in question as an argument, and encodes
     the binary information to a series of greyscale png images.
     These images are saved to the directory of the given file,
     using the ordered naming convention 'frame1.png'.
     The given file is deleted.
 
-    paramter info and return info!!!!!!!!!!!!
+    :param file: Path object of the file in question.
+    :type file: Path
+    :param bpp: 'Bits Per Pixel', how many bits to encode per
+        pixel. The higher the value, the higher the chance of
+        corruption during compression.
+    :type bpp: int
+    :raises ValueError: if the value of the 'bpp' argument is
+        not currently supported.
     """
     ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop.
     ## TODO: mulitprocessing
@@ -73,9 +80,7 @@ def make_frames(file: Path, bpp: int) -> None:
         raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
 
     bin = np.fromfile(str(file), dtype=np.uint8)
-    tempdir = file.parent
-
-    # NOTE: Trailing zero bytes on a gzip does not affect checksum of underlying file
+    # NOTE: Trailing null bytes on a gzip does not affect its checksum.
     framesize = 259200 * bpp
     filler_bytes = framesize - (bin.size // framesize)
     if filler_bytes != 0:
@@ -91,7 +96,7 @@ def make_frames(file: Path, bpp: int) -> None:
         if bpp > 1:
             frame = np.packbits(frame, axis=1, bitorder='little').ravel()
         frame = mapping[frame].reshape(1080,1920)
-        dir = tempdir / f'frame{i}.png'
+        dir = file.parent / f'frame{i}.png'
         cv2.imwrite(str(dir), frame)
         del frame
 
