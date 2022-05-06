@@ -132,3 +132,4 @@ dmypy.json
 # Random dev
 testinggrounds.ipynb
 testy.py
+bin/ffmpeg.exe

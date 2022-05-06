@@ -17,6 +17,7 @@ browser-cookie3 = "*"
 ffmpeg-python = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.9"
