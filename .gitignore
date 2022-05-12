@@ -133,3 +133,5 @@ dmypy.json
 testinggrounds.ipynb
 testy.py
 bin/ffmpeg.exe
+OUTPUT.mp4
+outputty.mp4
