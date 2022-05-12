@@ -111,6 +111,7 @@ def make_video(dir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: i
     output_path = dir / 'yb-output.mp4'
     cmd = (
         "ffmpeg -r {} -i {} -c:v libx264 -vf format=gray "
+        "-crf 0 "
         # "-x265-params lossless=1 -tune grain " 
         "-y {}".format(
             fps, str(dir) + '/frame%d.png', 

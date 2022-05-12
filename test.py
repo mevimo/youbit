@@ -10,18 +10,18 @@ import imageio
 pr = cProfile.Profile()
 pr.enable()
 
+framesize = 2073600
 
-bin = np.fromfile('C:/oldmonke.png', dtype=np.uint8)
-bin = np.unpackbits(bin).reshape(-1,1)
-print('SIZE: ' + str(bin.size) + ' !!!!!!!!!!!!!!!!!!!!')
-zeros = np.zeros(1165496, dtype=np.uint8)
+bin = np.fromfile('E:/biggie.mp4.mp4', dtype=np.uint8)
+bin = np.unpackbits(bin).reshape(-1,1) #1bpp
+zeros = np.zeros(framesize - (bin.size % framesize), dtype=np.uint8)
 bin = np.append(bin, zeros)
 
 bin[bin != 0] = 255
 # bin = bin[:2073600]
 # bin = np.split(bin, 50)
 
-frame_count = int(bin.size / 2073600)
+frame_count = int(bin.size / framesize)
 bin = bin.reshape((frame_count, 1920, 1080))
 # bin = np.split(bin, frame_count)
 # print(bin)
@@ -50,12 +50,13 @@ import av
 
 
 
-container = av.open("C:/OUTPUT.mp4", mode="w")
+container = av.open("E:/AV_OUTPUT.mp4", mode="w")
 
 stream = container.add_stream("libx264", rate=1)
 stream.width = 1920
 stream.height = 1080
 stream.pix_fmt = "gray"
+stream.options = {'crf': '0'}
 
 for framebin in bin:
     frame = av.VideoFrame.from_ndarray(framebin, format="gray")
@@ -115,7 +116,7 @@ container.close()
 
 
 
-# pr.print_stats(sort='tottime')
+pr.print_stats(sort='tottime')
 pr.disable()
 
 
