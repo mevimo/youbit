@@ -110,9 +110,10 @@ def make_video(dir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: i
     ## TODO: replace with ffmpy wrapper lib
     output_path = dir / 'yb-output.mp4'
     cmd = (
-        "ffmpeg -r {} -i {} -c:v libx264 -vf format=gray "
-        "-crf 0 "
+        "ffmpeg -r {} -i {} -c:v libx264 "
+        "-crf 15 -tune grain -x264opts no-deblock "
         # "-x265-params lossless=1 -tune grain " 
+        # "-x265-params lossless=1 "
         "-y {}".format(
             fps, str(dir) + '/frame%d.png', 
             str(output_path))

@@ -12,7 +12,7 @@ pr.enable()
 
 framesize = 2073600
 
-bin = np.fromfile('E:/biggie.mp4.mp4', dtype=np.uint8)
+bin = np.fromfile('C:/oldmonke.png', dtype=np.uint8)
 bin = np.unpackbits(bin).reshape(-1,1) #1bpp
 zeros = np.zeros(framesize - (bin.size % framesize), dtype=np.uint8)
 bin = np.append(bin, zeros)
@@ -22,7 +22,7 @@ bin[bin != 0] = 255
 # bin = np.split(bin, 50)
 
 frame_count = int(bin.size / framesize)
-bin = bin.reshape((frame_count, 1920, 1080))
+bin = bin.reshape((frame_count, 1080, 1920))
 # bin = np.split(bin, frame_count)
 # print(bin)
 # print(bin.shape)
@@ -39,7 +39,12 @@ bin = bin.reshape((frame_count, 1920, 1080))
 # process.stdin.close()
 # process.wait()
 
+pr.print_stats(sort='tottime')
+pr.disable()
 
+
+print(bin.flatten()[:500])
+print('---------------------------------------------')
 
 
 
@@ -50,17 +55,18 @@ import av
 
 
 
-container = av.open("E:/AV_OUTPUT.mp4", mode="w")
+container = av.open("C:/AV_OUTPUT.mp4", mode="w")
 
 stream = container.add_stream("libx264", rate=1)
 stream.width = 1920
 stream.height = 1080
-stream.pix_fmt = "gray"
-stream.options = {'crf': '0'}
+stream.options = {'crf':'0'}
+# stream.options = {'crf': '20', 'tune': 'grain', '-x264opts': 'no-deblock'}
 
 for framebin in bin:
     frame = av.VideoFrame.from_ndarray(framebin, format="gray")
-    # container.mux(stream.encode())
+    # stream.encode(frame)
+
     for packet in stream.encode(frame):
         container.mux(packet)
 
@@ -116,19 +122,18 @@ container.close()
 
 
 
-pr.print_stats(sort='tottime')
-pr.disable()
 
 
 
 
 
-# cap = cv2.VideoCapture('C:/OUTPUT.mp4')
+cap = cv2.VideoCapture('C:/AV_OUTPUT.mp4')
 
-# index = 0
 
-# while(cap.isOpened()):
-#     ret, frame = cap.read()
-#     if index == 0:
-#         print(frame)
-#     index += 1
+while(cap.isOpened()):
+    ret, frame = cap.read()
+    x = frame.flatten()[:1500]
+    x = np.delete(x, np.arange(0, x.size, 3))
+    x = np.delete(x, np.arange(0, x.size, 2))
+    print(x)
+    break
