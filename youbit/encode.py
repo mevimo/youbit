@@ -6,6 +6,7 @@ from pathlib import Path
 from par2deep.par2deep import par2deep
 import shutil
 import os
+import av
 
 
 def apply_ecc(tempdir: Path) -> tuple[Path, int, int]:
@@ -50,14 +51,10 @@ def apply_ecc(tempdir: Path) -> tuple[Path, int, int]:
     par_recovery.unlink()
     par_main.unlink()
     return file, par_parity_size, par_recovery_size
+    
 
-
-def make_frames(file: Path, bpp: int) -> None:
-    """Takes Path to the file in question as an argument, and encodes
-    the binary information to a series of greyscale png images.
-    These images are saved to the directory of the given file,
-    using the ordered naming convention 'frame1.png'.
-    The given file is deleted.
+def encode(file: Path, output: Path, bpp: int, framerate: int = 1, crf: int = 0) -> None:
+    """IDK EXPLAIN
 
     :param file: Path object of the file in question.
     :type file: Path
@@ -71,53 +68,35 @@ def make_frames(file: Path, bpp: int) -> None:
     ## TODO: chunking, reading each file out in chunks, big loop, create 1 frame each loop.
     ## TODO: mulitprocessing
     if bpp == 1:
-        mapping = np.array([0,255])
+        mapping = np.array([0,255], dtype=np.uint8)
     elif bpp == 2:
-        mapping = np.array([0,160,96,255])
+        mapping = np.array([0,160,96,255], dtype=np.uint8)
     elif bpp == 3:
-        mapping = np.array([0,144,80,208,48,176,112,255])
+        mapping = np.array([0,144,80,208,48,176,112,255], dtype=np.uint8)
     else:
         raise ValueError('Unsupported BPP (Bits Per Pixel) value.')
 
-    bin = np.fromfile(str(file), dtype=np.uint8)
-    # NOTE: Trailing null bytes on a gzip does not affect its checksum.
+    bin = np.fromfile(file, dtype=np.uint8)
     framesize = 259200 * bpp
-    filler_bytes = framesize - (bin.size // framesize)
-    if filler_bytes != 0:
-        zeros = np.zeros(filler_bytes, dtype=np.uint8)
-        bin = np.append(bin, zeros)
-        del zeros
-    framecount = bin.size // framesize
+    last_frame_padding = framesize - (bin.size % framesize)
+    if last_frame_padding:
+        bin = np.append(bin, np.zeros(last_frame_padding, dtype=np.uint8))
+    framecount = int(bin.size / framesize)
 
-    for i in range(framecount):
-        start = framesize * i
-        stop = start + framesize
-        frame = np.unpackbits(bin[start:stop]).reshape(-1,bpp)
-        if bpp > 1:
-            frame = np.packbits(frame, axis=1, bitorder='little').ravel()
-        frame = mapping[frame].reshape(1080,1920)
-        dir = file.parent / f'frame{i}.png'
-        cv2.imwrite(str(dir), frame)
-        del frame
+    bin = np.unpackbits(bin).reshape(-1,bpp)
+    if bpp > 1:
+        bin = np.packbits(bin, axis=1, bitorder='little').ravel()
+    bin = mapping[bin]
+    bin = bin.reshape(framecount, 1080, 1920)
 
-
-def make_video(dir: Path, fps: int) -> Path: #codec: str = 'libx265', bitrate: int = 53453453 blahlbah options
-    """
-    Takes a directory Path as argument, where it will look for
-    images with ordered naming scheme 'frame1.png', and create
-    a .mp4 video from them.
-    """
-    ## TODO: replace with ffmpy wrapper lib
-    output_path = dir / 'yb-output.mp4'
-    cmd = (
-        "ffmpeg -r {} -i {} -c:v libx264 "
-        "-crf 15 -tune grain -x264opts no-deblock "
-        # "-x265-params lossless=1 -tune grain " 
-        # "-x265-params lossless=1 "
-        "-y {}".format(
-            fps, str(dir) + '/frame%d.png', 
-            str(output_path))
-        )
-    subprocess.Popen(cmd, shell=True).wait()
-    return output_path
-    
+    container = av.open(str(output), mode='w')
+    stream = container.add_stream("libx264", rate=framerate)
+    stream.width = 1920
+    stream.height = 1080
+    stream.options = {'crf':str(crf)}
+    # stream.options = {'crf': '20', 'tune': 'grain', '-x264opts': 'no-deblock'}
+    for binframe in bin:
+        frame = av.VideoFrame.from_ndarray(binframe, format='gray')
+        container.mux(stream.encode(frame))
+    container.mux(stream.encode())
+    container.close()
