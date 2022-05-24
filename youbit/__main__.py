@@ -14,7 +14,6 @@ import gzip
 from zipfile import ZipFile
 
 from youbit.automate import Uploader
-from youbit.encode import apply_ecc, encode
 from youbit.decode import remove_ecc, extract_frames, extract_binary
 
 

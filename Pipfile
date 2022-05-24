@@ -17,6 +17,7 @@ browser-cookie3 = "*"
 ffmpeg-python = "*"
 imageio = "*"
 av = "*"
+numba = "*"
 
 [dev-packages]
 ipykernel = "*"

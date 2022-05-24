@@ -29,3 +29,7 @@ YOUBIT MANUAL UPLOAD:
         +---------------------------------------------------------------+
 
     - After upload, this entire archive may be removed.
+
+
+
+    NAAAAAH USE BASE64 ENCODING PLS TY
