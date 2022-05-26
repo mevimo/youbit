@@ -32,35 +32,40 @@ def apply_ecc_par(tempdir: Path) -> tuple[Path, int, int]:
     # I might have to consider a non library multi-platform application with CLI support,
     # just ship youbit with the binaries, and interface with it via subprocess.Popen()...
     ## TODO: switch to par2.exe subprocess
-    par = par2deep(str(tempdir))
-    par.args['quiet'] = True
-    par.args['percentage'] = pc
-    par.args['clean_backup'] = True
-    par.check_state()
-    for _ in par.execute(): pass
+    # par = par2deep(str(tempdir))
+    # par.args['quiet'] = True
+    # par.args['percentage'] = pc
+    # par.args['clean_backup'] = True
+    # par.check_state()
+    # for _ in par.execute(): pass
 
-    # -----------------------------------------------------------
-    for file in tempdir.iterdir():
-        if 'vol' in file.name and file.suffix == '.par2':
-            par_recovery = file
-            par_recovery_size = os.path.sizeof(par_recovery)
-        elif file.suffix == '.par2':
-            par_parity = file
-            par_parity_size = os.path.sizeof(par_parity)
-        else:
-            par_main = file
-    with open(par_parity, 'ab') as parity, open(par_recovery, 'rb') as recovery, open(par_main, 'rb') as main:
-        # We want it in order; parity -> recovery -> main
-        shutil.copyfileobj(recovery, parity)
-        shutil.copyfileobj(main, parity)
-    file = par_parity.rename(par_parity.parent / 'file.bin')
-    par_recovery.unlink()
-    par_main.unlink()
-    return file, par_parity_size, par_recovery_size
+    # # -----------------------------------------------------------
+    # for file in tempdir.iterdir():
+    #     if 'vol' in file.name and file.suffix == '.par2':
+    #         par_recovery = file
+    #         par_recovery_size = os.path.sizeof(par_recovery)
+    #     elif file.suffix == '.par2':
+    #         par_parity = file
+    #         par_parity_size = os.path.sizeof(par_parity)
+    #     else:
+    #         par_main = file
+    # with open(par_parity, 'ab') as parity, open(par_recovery, 'rb') as recovery, open(par_main, 'rb') as main:
+    #     # We want it in order; parity -> recovery -> main
+    #     shutil.copyfileobj(recovery, parity)
+    #     shutil.copyfileobj(main, parity)
+    # file = par_parity.rename(par_parity.parent / 'file.bin')
+    # par_recovery.unlink()
+    # par_main.unlink()
+    # return file, par_parity_size, par_recovery_size
 
 
 def apply_ecc_polar():
     ##TODO: cython extension for aff3ct lib, if possible
+    pass
+
+
+def apply_ecc():
+    #TODO: interface with go library, pretty much only choice
     pass
 
 
