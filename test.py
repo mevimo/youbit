@@ -2,6 +2,7 @@ from numba import njit, prange, jit
 from numba.typed import List
 import numpy as np
 from time import time
+import av
 
 
 
@@ -39,56 +40,61 @@ from time import time
 # print(bin)
 
 
-print('---------------------------------')
-bin = np.random.randint(256, size=20736, dtype=np.uint8)
-# bin = np.random.randint(2, size=207360000, dtype=np.uint8)
-print('bin: ', bin[:20])
-# bin = np.unpackbits(bin)
-print('----------------------------')
+from youbit._video_code import VideoDecoder
+from youbit._decode import read_pixels
+from pathlib import Path
+import time
+
+
+path = Path('E:/output.mp4')
+with VideoDecoder(path) as video:
+    frame = video.get_frame()
+    print(frame[:50])
+    tik = time.time()
+    frame = read_pixels(frame, 1)
+    tok = time.time()
+    print('frame time: ' + str(tok-tik))
+    print(frame[:50])
+
+#     print('------------------------------')
+#     tik = time.time()
+#     frame = read_pixels(frame, 3)
+#     tok = time.time()
+#     print(frame[:50])
+
+#     print('total time: ' + str(tok-tik))
+
+tikk = time.time()
+
+arr = np.array([], dtype=np.uint8)
+
+tottime = 0
+
+# for _ in range(100):
+#     for frame in VideoDecoder(path):
+#         tik = time.time()
+#         read_pixels(frame, 3)
+#         tottime += (time.time() - tik)
 
 
 
-@njit('void(uint8[::1], uint8[::1], uint8[::1])', inline='never')
-def _numba_pack_x64(arr, su, mapping):
-    uarr = np.zeros(192, dtype=np.uint8)
-    for i in range(24):
-        for n in range(7, -1, -1):
-            k = arr[i] >> n
-            uarr[i*8+(7-n)] = (k & 1)
-    # for i in range(192):
-    #     k = arr[i//8] >> (7 - (i % 8))
-    #     uarr[i] = (k & 1)
-    for i in range(64):
-        j = i * 3
-        su[i] = mapping[(uarr[j]<<2)|(uarr[j+1]<<1)|(uarr[j+2])]
-       
-@njit('void(uint8[::1], int_, uint8[::1], uint8[::1])', parallel=True)
-def _numba_pack(arr, div, su, mapping):
-    for i in prange(div//64):
-        _numba_pack_x64(arr[i*24:(i*24)+24], su[i*64:(i*64)+64], mapping)
-        
-def transform_array(arr):
-    div, mod = np.divmod(arr.size*8, 3)
-    su = np.zeros(div + (mod>0), dtype=np.uint8)
 
-    # mapping = np.array([0,144,80,208,48,176,112,255], dtype=np.uint8)
-    mapping = np.array([0,48,80,112,144,176,208,255], dtype=np.uint8)
+tokk = time.time()
 
-    _numba_pack(arr[:div*3], div, su, mapping)
-    if mod > 0:
-        print('THERES A MOD')
-        su[-1] = sum(x*y for x,y in zip(arr[div*3:], (128, 64, 32, 16, 8, 4, 2, 1)))
-    # return mapping[su]
-    return su
+print('total: ' + str(tokk-tikk))
+print('time spent reading pixels: ' + str(tottime))
 
 
-tik = time()
-# bin = np.unpackbits(bin)
-bon = transform_array(bin)
-tok = time()
+# tik = time.time()
 
-print('numba: ', bon[:20])
-print('time: ', tok-tik)
+# print(arr.size)
+# arr = read_pixels(arr, 3)
+
+# tok = time.time()
+
+# print('total time readpixel: ' + str(tok-tik))
+
+
 
 
 # bon[bon < 32] = 0 #000

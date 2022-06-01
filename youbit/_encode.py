@@ -1,13 +1,5 @@
-from ast import Raise
-import cv2
-import subprocess
 import numpy as np
 from pathlib import Path
-from par2deep.par2deep import par2deep
-import shutil
-import os
-import av
-import time
 from numba import njit, prange
 
 
@@ -147,30 +139,30 @@ def transform_array(arr: np.ndarray, bpp: int) -> np.ndarray:
         _numba_transform_bpp3(arr, div, out, mapping)
     elif bpp == 8:
         raise ValueError('A bpp of 8 was passed as argument. No transformation is required when using a bpp of 8.')
-    else:
+    else: # should probably be inn api class not here cause well have it twice then
         raise ValueError(f'Unsupported bpp argument: {bpp} of type {type(bpp)}.')
     return out
 
 
-class VideoEncoder:
-    """1920x1080"""
-    def __init__(self, output: Path, framerate: int, res: tuple[int, int], crf: int):
-        ##TODO: validate crf to be within possible values
-        ##TODO: raise error when output file path already exists, unless 'overwrite' parameter or something is set to true
-        self.container = av.open(str(output), mode='w')
-        self.stream = self.container.add_stream("libx264", rate=framerate)
-        self.stream.width = res[0]
-        self.stream.height = res[1]
-        self.stream.options = {'crf':str(crf), 'tune': 'grain', '-x264opts': 'no-deblock'}
-    def feed(self, arr):
-        ##TODO: validation, arr.reshape should work, if that works the rest of feed() works too. validate or is native numpy error clear enough?
-        arr = arr.reshape(-1, self.stream.height, self.stream.width)
-        for framearr in arr:
-            frame = av.VideoFrame.from_ndarray(framearr, format='gray')
-            self.container.mux(self.stream.encode(frame))
-    def finish(self):
-        self.container.mux(self.stream.encode())
-        self.container.close()
+# class VideoEncoder:
+#     """1920x1080"""
+#     def __init__(self, output: Path, framerate: int, res: tuple[int, int], crf: int):
+#         ##TODO: validate crf to be within possible values
+#         ##TODO: raise error when output file path already exists, unless 'overwrite' parameter or something is set to true
+#         self.container = av.open(str(output), mode='w')
+#         self.stream = self.container.add_stream("libx264", rate=framerate)
+#         self.stream.width = res[0]
+#         self.stream.height = res[1]
+#         self.stream.options = {'crf':str(crf), 'tune': 'grain', '-x264opts': 'no-deblock'}
+#     def feed(self, arr):
+#         ##TODO: validation, arr.reshape should work, if that works the rest of feed() works too. validate or is native numpy error clear enough?
+#         arr = arr.reshape(-1, self.stream.height, self.stream.width)
+#         for framearr in arr:
+#             frame = av.VideoFrame.from_ndarray(framearr, format='gray')
+#             self.container.mux(self.stream.encode(frame))
+#     def finish(self):
+#         self.container.mux(self.stream.encode())
+#         self.container.close()
 
 
 # def video_encode(arr: np.ndarray, output: Path, framerate: int, res: tuple[int, int], crf: int) -> None:

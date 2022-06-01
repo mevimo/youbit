@@ -13,8 +13,8 @@ import json
 import gzip
 from zipfile import ZipFile
 
-from youbit.automate import Uploader
-from youbit.decode import remove_ecc, extract_frames, extract_binary
+# from youbit.automate import Uploader
+# from youbit.decode import remove_ecc, extract_frames, extract_binary
 
 
 class Encoder:

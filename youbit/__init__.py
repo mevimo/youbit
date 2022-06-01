@@ -8,9 +8,9 @@ __license__ = "MIT License"
 
 from youbit.__main__ import Encoder, Decoder # main api
 
-import youbit.encode as lowlevel_encode
-import youbit.decode as lowlevel_decode
-import youbit.automate as lowlevel_automate
+# import youbit.encode as lowlevel_encode
+# import youbit.decode as lowlevel_decode
+# import youbit.automate as lowlevel_automate
 
 # import sys
 # assert sys.version_info >= (2, 5)
