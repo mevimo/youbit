@@ -3,7 +3,18 @@ from numba.typed import List
 import numpy as np
 from time import time
 import av
+from youbit.decode import read_pixels
 
+
+arr = [i for i in range(256)] * 8100
+arr = np.array(arr, dtype=np.uint8)
+arr = read_pixels(arr, 3)
+
+print(arr[:50])
+print(arr.size)
+print(arr[-50:])
+
+np.save('test_read_pixels_solution_bpp3.npy', arr)
 
 
 # bin = np.random.randint(2, size=100000002, dtype=bool)
@@ -40,49 +51,49 @@ import av
 # print(bin)
 
 
-from youbit._video_code import VideoDecoder
-from youbit._decode import read_pixels
-from pathlib import Path
-import time
+# from youbit._video_code import VideoDecoder
+# from youbit.decode import read_pixels
+# from pathlib import Path
+# import time
 
 
-path = Path('E:/output.mp4')
-with VideoDecoder(path) as video:
-    frame = video.get_frame()
-    print(frame[:50])
-    tik = time.time()
-    frame = read_pixels(frame, 1)
-    tok = time.time()
-    print('frame time: ' + str(tok-tik))
-    print(frame[:50])
-
-#     print('------------------------------')
+# path = Path('E:/output.mp4')
+# with VideoDecoder(path) as video:
+#     frame = video.get_frame()
+#     print(frame[:50])
 #     tik = time.time()
-#     frame = read_pixels(frame, 3)
+#     frame = read_pixels(frame, 1)
 #     tok = time.time()
+#     print('frame time: ' + str(tok-tik))
 #     print(frame[:50])
 
-#     print('total time: ' + str(tok-tik))
+# #     print('------------------------------')
+# #     tik = time.time()
+# #     frame = read_pixels(frame, 3)
+# #     tok = time.time()
+# #     print(frame[:50])
 
-tikk = time.time()
+# #     print('total time: ' + str(tok-tik))
 
-arr = np.array([], dtype=np.uint8)
+# tikk = time.time()
 
-tottime = 0
+# arr = np.array([], dtype=np.uint8)
 
-# for _ in range(100):
-#     for frame in VideoDecoder(path):
-#         tik = time.time()
-#         read_pixels(frame, 3)
-#         tottime += (time.time() - tik)
+# tottime = 0
+
+# # for _ in range(100):
+# #     for frame in VideoDecoder(path):
+# #         tik = time.time()
+# #         read_pixels(frame, 3)
+# #         tottime += (time.time() - tik)
 
 
 
 
-tokk = time.time()
+# tokk = time.time()
 
-print('total: ' + str(tokk-tikk))
-print('time spent reading pixels: ' + str(tottime))
+# print('total: ' + str(tokk-tikk))
+# print('time spent reading pixels: ' + str(tottime))
 
 
 # tik = time.time()
