@@ -3,18 +3,120 @@ from numba.typed import List
 import numpy as np
 from time import time
 import av
-from youbit.decode import read_pixels
+from youbit import decode
+from yt_dlp import YoutubeDL
+from yt_dlp.utils import ExtractorError, DownloadError
+from youbit import util
+import os
+import sys
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+import cv2
+
+import re
 
 
-arr = [i for i in range(256)] * 8100
-arr = np.array(arr, dtype=np.uint8)
-arr = read_pixels(arr, 3)
 
-print(arr[:50])
-print(arr.size)
-print(arr[-50:])
 
-np.save('test_read_pixels_solution_bpp3.npy', arr)
+from youbit import Encoder, Decoder
+
+bpp = None
+
+with Encoder(Path('E:/test2.jpg')) as encoder:
+    encoder.encode('E:/testoutputty.mp4', overwrite=True, bpp=2)
+    bpp = encoder.metadata['bpp']
+
+with Decoder(Path('E:/testoutputty.mp4')) as decoder:
+    decoder.decode('E:/testoutputty2.jpg', bpp=bpp, overwrite=True)
+
+
+
+# cap = cv2.VideoCapture('E:/testoutputty.mp4')
+
+# while(cap.isOpened()):
+#     ret, frame = cap.read()
+#     x = frame.flatten()[:1500]
+#     x = np.delete(x, np.arange(0, x.size, 3))
+#     x = np.delete(x, np.arange(0, x.size, 2))
+#     print(x)
+#     break
+
+
+
+
+
+
+
+
+# re_string = "^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$"
+
+# stringy = 'E:/google.com'
+
+# print(re.search(re_string, stringy))
+
+
+
+
+
+
+
+# URL = 'https://www.youtube.com/watch?v=7zpxgyG7eGk'
+# # opts = {
+# #     'cookiesfrombrowser': ('chrome', ),
+# #     'cookiefile': 'cookies'
+# # }
+
+# opts = {
+#     'logtostderr': True,
+# }
+
+# x = open(os.devnull, 'w')
+# y = open('E:/stderr.txt', 'w')
+
+# with redirect_stderr(x): # yt-dlp will print the error message to stderr in addition to raising an exception, effectively writing dublicate information to terminal. There are no flags that alter this behavior.
+#     with YoutubeDL(opts) as ydl:
+#         try:
+#             info = ydl.extract_info(URL, download=False)
+#         except DownloadError as e:
+#             raise ValueError(f'Passed url is invalid: {e}')
+
+
+
+#     # ydl.download(URL)
+
+
+# for k,v in info.items():
+#     print(k,v)
+
+
+
+
+
+
+
+
+
+
+
+# arr = [i for i in range(256)] * 8100
+# arr = np.array(arr, dtype=np.uint8)
+
+# print(arr[:50])
+
+# arr = decode.read_pixels(arr, 2)
+
+# print(arr[:50])
+# print(arr.size)
+# print(arr[-50:])
+
+# np.save('test_read_pixels_solution_bpp2.npy', arr)
+
+
+
+
+
+
+
 
 
 # bin = np.random.randint(2, size=100000002, dtype=bool)

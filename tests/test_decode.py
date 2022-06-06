@@ -5,8 +5,6 @@ from youbit import decode
 from pathlib import Path
 import os
 import numpy as np
-import shutil
-import hashlib
 
 
 def test_read_pixels():
@@ -14,6 +12,7 @@ def test_read_pixels():
     THEN verify if the returned array is of correct size AND equal to a precalculated and validated array.
     """
     arr = [i for i in range(256)] * 8100 # makes the length exactly 2073600, or the sum of pixels in a 1920x1080 frame. 
+    arr = np.array(arr, dtype=np.uint8)
 
     solution_bpp1 = Path(os.getcwd()) / 'testdata' / 'solutions' / 'test_read_pixels_solution_bpp1.npy'
     solution_bpp1 = np.load(str(solution_bpp1))
@@ -30,11 +29,9 @@ def test_read_pixels():
         assert output.size == desired_size
         if bpp == 1:
             np.testing.assert_array_equal(output, solution_bpp1)
-        if bpp == 2:
+        elif bpp == 2:
             np.testing.assert_array_equal(output, solution_bpp2)
-        if bpp == 3:
+        elif bpp == 3:
             np.testing.assert_array_equal(output, solution_bpp3)
         else:
             assert False, 'No valid bbp value was detected, thus this test cannot be validated. This is an issue inside this test function.'
-
-

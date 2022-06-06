@@ -2,10 +2,12 @@ import numpy as np
 from numba import njit
 
 
-@njit('void(uint8[::1])')
-def _numba_read_bpp1(arr):
-    for i in range(len(arr)):
-        arr[i] = arr[i] >> 7
+@njit('void(uint8[::1], uint8[::1])')
+def _numba_read_bpp1(arr, out):
+    """ still needs to be packed"""
+    ##TODO maybe include the packing anyway
+    for i in range(out.size):
+        out[i] = arr[i] >> 7
 
 
 @njit('void(uint8[::1], uint8[::1])')
@@ -13,7 +15,7 @@ def _numba_read_bpp2(arr, out):
     #! cant get this ( and any of the numba accelerated functions) to scale meaningfully with parallelism... is far from the bottleneck either way
     for i in range(out.size):
         j = i * 4
-        out[i] = (arr[j] & 192) | (arr[j+1] & 192 >> 2) | (arr[j+2] & 192 >> 4) | (arr[j+3] & 192 >> 6)
+        out[i] = (arr[j] & 192) | ((arr[j+1] & 192) >> 2) | ((arr[j+2] & 192) >> 4) | ((arr[j+3] & 192) >> 6)
     
 
 @njit('void(uint8[::1], uint8[::1])')
@@ -36,10 +38,12 @@ def read_pixels(arr: np.ndarray, bpp: int) -> np.ndarray:
     if arr.size % (bpp * 8):
         raise ValueError(f'The length of the given array ({arr.size}) is not divisble by 8.')
     if bpp == 1:
-        _numba_read_bpp1(arr)
-        out = np.packbits(arr)
+        out = np.zeros(arr.size, dtype=np.uint8)
+        _numba_read_bpp1(arr, out)
+        out = np.packbits(out)
     elif bpp == 2:
-        out = np.zeros(int(arr.size / 4), dtype=np.uint8)
+        out_size = int(arr.size / 4)
+        out = np.zeros(out_size, dtype=np.uint8)
         _numba_read_bpp2(arr, out)
     elif bpp == 3:
         out_size = int(arr.size / 8) * 3

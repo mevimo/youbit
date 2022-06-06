@@ -1,9 +1,21 @@
 import numpy as np
 from numba import njit, prange
+from pathlib import Path 
 
+
+def load_array(file: Path) -> np.ndarray:
+    """Reads a file and loads it into a numpy uin8 array."""
+    return np.fromfile(file, dtype=np.uint8)
+    
 
 def add_lastframe_padding(arr: np.ndarray, res: tuple[int, int], bpp: int) -> np.ndarray:
-    framesize = int(res[0] * res[1] / 8 * bpp)
+    """Adds zeros to a uint8 numpy array so that it can be divided properly into frames.
+    Amount of padding added depends onthe target resoltuion and target bpp.
+    Sum of pixels of given resolution must be divisible by 8!"""
+    pixel_count = res[0] * res[1]
+    if (pixel_count % 8):
+        raise ValueError(f'The given resolution ({res[0]}x{res[1]}) has a pixel count ({pixel_count}) that is not divisible by 8.')
+    framesize = int(pixel_count / 8) * bpp
     last_frame_padding = framesize - (arr.size % framesize)
     if last_frame_padding:
         arr = np.append(arr, np.zeros(last_frame_padding, dtype=np.uint8))
