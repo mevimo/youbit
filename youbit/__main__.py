@@ -138,14 +138,14 @@ class Decoder(TempDirMixin):
             pass
         elif self.input_type == 'path':
             file = self.input
-        video_decoder = VideoDecoder(vid = file, overwrite = overwrite)
+        video_decoder = VideoDecoder(vid = file)
         frames = []
         for frame in video_decoder:
             frame = decode.read_pixels(frame, bpp)
             frames.append(frame)
         arr = np.concatenate(frames, dtype=np.uint8)
         # decrypt and or unzip in-memory
-        arr.tofile(Path(path))
+        arr.tofile(Path(path)) ##TODO: overwrite logic here
 
     #def verify_checksum
 

@@ -17,10 +17,17 @@
 #     P: p frame
 #     B: b frame
 
+
+
 from __future__ import print_function
 import json
 import subprocess
 import argparse
+
+
+
+
+C_WEIRD_COUNT = 0
 
 class BFrame(object):
     def __repr__(self, *args, **kwargs):
@@ -68,6 +75,10 @@ class GOP(object):
         for frame in self.frames:
             frames_repr += str(frame)
         
+        if frames_repr == 'IP':
+            global C_WEIRD_COUNT
+            C_WEIRD_COUNT += 1
+
         gtype = 'CLOSED' if self.closed else 'OPEN'
         
         return 'GOP: {frames} {count} {gtype}'.format(frames=frames_repr, 
@@ -90,14 +101,17 @@ response_json = subprocess.check_output(command, shell=True, stderr=None)
 frames = json.loads(response_json)["frames"]
 
 
-gop_count = 0
+frame_count = 0
+keyframe_count = 0
 gops = []
 gop = GOP()
 gops.append(gop)
 
+
+
 for jframe in frames:
     if jframe["media_type"] == "video":
-        
+        frame_count += 1
         frame = None
         
         if jframe["pict_type"] == 'I':
@@ -108,6 +122,7 @@ for jframe in frames:
             frame = IFrame()
             if jframe["key_frame"] == 1:
                 frame.key_frame = True
+                keyframe_count += 1
         elif jframe["pict_type"] == 'P':
             frame = PFrame()
         elif jframe["pict_type"] == 'B':
@@ -118,3 +133,7 @@ for jframe in frames:
 
 for gop in gops:
     print(gop)
+print(keyframe_count)
+print(frame_count)
+
+print(C_WEIRD_COUNT)

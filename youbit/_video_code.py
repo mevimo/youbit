@@ -36,17 +36,19 @@ class VideoEncoder:
 
 class VideoDecoder:
     """Only extracting keyframes"""
-    def __init__(self, vid: Path, overwrite: bool = False) -> None:
-        if vid.exists() and vid.is_file() and not overwrite:
-            raise FileExistsError(f'File "{str(vid)}" already exists.')
+    def __init__(self, vid: Path) -> None:
+        if not vid.exists() or not vid.is_file():
+            raise ValueError(f'File not found: {str(vid)}.')
         self.container = av.open(str(vid))
         self.stream = self.container.streams.video[0]
         # self.stream.thread_type = "AUTO"
         self.stream.codec_context.skip_frame = 'NONKEY'
+        print(self.stream.frames)
         self.frames = self.container.decode(self.stream)
 
     def get_frame(self) -> np.ndarray:
         frame = next(self.frames)
+        print(frame.index, frame.pict_type)
         frame = frame.to_ndarray(format='gray').ravel()
         return frame
 
