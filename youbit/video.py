@@ -3,6 +3,8 @@ import av
 import numpy as np
 from typing import Union
 import warnings
+from youbit.types import ndarr_1d_uint8
+from typing import Any
 
 
 class VideoEncoder:
@@ -19,7 +21,7 @@ class VideoEncoder:
         self.stream.height = res[1]
         self.stream.options = {'crf':str(crf), 'tune': 'grain', '-x264opts': 'no-deblock'}
 
-    def feed(self, arr: np.ndarray[(1,), np.uint8]) -> None:
+    def feed(self, arr: ndarr_1d_uint8) -> None:
         ##TODO: validation, arr.reshape should work, if that works the rest of feed() works too. validate or is native numpy error clear enough?
         try:
             arr = arr.reshape(-1, self.stream.height, self.stream.width)
@@ -29,10 +31,10 @@ class VideoEncoder:
             frame = av.VideoFrame.from_ndarray(framearr, format='gray')
             self.container.mux(self.stream.encode(frame))
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, *args: str, **kwargs: str) -> None:
         self.close()
 
     def close(self) -> None:
@@ -62,28 +64,28 @@ class VideoDecoder:
     #     return [frame for frame in self]
     #literally the same as list(VideoDeocder(x))
 
-    def get_frame(self) -> np.ndarray[(1,), np.uint8]:
-        frame = next(self.frames)
-        if not ((frame.index-11) % 17): # The frames at index 11, 28, 45, 64... (the 12th + interval of 17) are duplicate keyframes and must be skipped. 
+    def get_frame(self) -> ndarr_1d_uint8:
+        frame: Any = next(self.frames)
+        if not ((frame.index-11) % 17): ## The frames at index 11, 28, 45, 64... (the 12th + interval of 17) are duplicate keyframes and must be skipped. 
             frame = next(self.frames)
-        frame = frame.to_ndarray(format='gray').ravel()
-        return frame
+        arr: ndarr_1d_uint8 = frame.to_ndarray(format='gray').ravel()
+        return arr
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self
 
-    def __next__(self) -> np.ndarray[(1,), np.uint8]:
+    def __next__(self) -> ndarr_1d_uint8:
         try:
             return self.get_frame()
         except StopIteration as e:
             self.close()
             raise e
     
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, *args: str, **kwargs: str) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         self.container.close()

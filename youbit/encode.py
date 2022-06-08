@@ -1,15 +1,17 @@
 import numpy as np
 from numba import njit, prange
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+import numpy.typing as npt
+from youbit.types import ndarr_1d_uint8, ndarr_any
 
 
-def load_array(file: Path) -> np.ndarray[(1,), np.uint8]:
+def load_array(file: Path) -> ndarr_1d_uint8:
     """Reads a file and loads it into a numpy uin8 array."""
     return np.fromfile(file, dtype=np.uint8)
     
 
-def add_lastframe_padding(arr: np.ndarray, target_res: tuple[int, int], bpp: int) -> np.ndarray:
+def add_lastframe_padding(arr: ndarr_any, target_res: tuple[int, int], bpp: int) -> ndarr_any:
     """Adds zeros to a uint8 numpy array so that it can be divided properly into frames.
     Amount of padding added depends onthe target resolution and target bpp.
     Sum of pixels of given resolution must be divisible by 8!"""
@@ -24,20 +26,20 @@ def add_lastframe_padding(arr: np.ndarray, target_res: tuple[int, int], bpp: int
 
 
 @njit('void(uint8[::1], uint8[::1], uint8[::1])', inline='never')
-def _numba_transform_bpp3_x64(arr, out, mapping):
+def _numba_transform_bpp3_x64(arr, out, mapping) -> None:
     for i in range(64):
         j = i * 3
         out[i] = mapping[(arr[j]<<2)|(arr[j+1]<<1)|(arr[j+2])]
 
 
 @njit('void(uint8[::1], int_, uint8[::1], uint8[::1])', parallel=True)
-def _numba_transform_bpp3(arr, div, out, mapping):
+def _numba_transform_bpp3(arr, div, out, mapping) -> None:
     for i in prange(div//64):
         _numba_transform_bpp3_x64(arr[i*192:(i*192)+192], out[i*64:(i*64)+64], mapping)
 
 
 @njit('void(uint8[::1], uint8[::1], uint8[::1])', inline='never')
-def _numba_transform_bpp2_x64(arr, out, mapping):
+def _numba_transform_bpp2_x64(arr, out, mapping) -> None:
     for i in range(64):
         j = i * 2
         out[i] = mapping[(arr[j]<<1)|(arr[j+1])]
@@ -45,14 +47,14 @@ def _numba_transform_bpp2_x64(arr, out, mapping):
 
 @njit('void(uint8[::1], int_, uint8[::1], uint8[::1])', parallel=True)
 #! remove the loop unrolling, div, mapping, floor division, and all the bloat that is unnecessary. Also, it should be tested again if this benefits from parallelism, because i doubt it.
-def _numba_transform_bpp2(arr, div, out, mapping):
+def _numba_transform_bpp2(arr, div, out, mapping) -> None:
     ##TODO maybe allow these functions to handle non-size-conform arrays anyway? should not happen but does not hurt performance.
     ##TODO It does allow the user to use YouBit for weird, alternative resolutions. Might be valuable.
     for i in prange(div//64):
         _numba_transform_bpp2_x64(arr[i*128:(i*128)+128], out[i*64:(i*64)+64], mapping)
 
 
-def transform_array(arr: np.ndarray[(int,), np.uint8], bpp: int) -> np.ndarray[(int,), np.uint8]:
+def transform_array(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
     """Transforms a uint8 numpy array (0, 255, 38, ..) representing individual bytes
     into a uint8 numpy array representing 8 bit greyscale pixels. Returns a new array.
     The output depends on the 'bpp' (or 'bits per pixel') parameter.

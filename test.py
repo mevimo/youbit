@@ -3,7 +3,7 @@ from numba.typed import List
 import numpy as np
 from time import time
 import av
-from youbit import decode
+from youbit import decode, encode
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import ExtractorError, DownloadError
 from youbit import util
@@ -19,31 +19,43 @@ import re
 
 
 from youbit import Encoder, Decoder
-from youbit._video_code import VideoDecoder
+from youbit.video import VideoDecoder
+from youbit import util
 
+
+result = util.test_error_rate(
+    'E:/testok.jpg',
+    'E:/test2.jpg'
+)
+for k,v in result.items():
+    print(k, v)
+    print()
 
 # for frame in VideoDecoder(Path('E:/dev/youbit/test2.jpg.mkv')):
 #     pass
 
-for frame in VideoDecoder(Path('E:/dev/youbit/youtubeoutputmkv.mkv')):
-    pass
+# frames= []
+
+# for frame in VideoDecoder(Path('E:/dev/youbit/test2.jpg.mkv')):
+#     frame = decode.read_pixels(frame, 2)
+#     frames.append(frame)
+# output_arr = np.concatenate(frames, dtype=np.uint8)
+# output_arr.tofile(Path('E:/testok.jpg'))
 
 
 
 
+# URL = 'https://youtu.be/5imKFYIfIIQ'
+# # opts = {
+# #     'cookiesfrombrowser': ('chrome', ),
+# #     'cookiefile': 'cookies'
+# # }
 
-
-URL = 'https://youtu.be/5imKFYIfIIQ'
 # opts = {
-#     'cookiesfrombrowser': ('chrome', ),
-#     'cookiefile': 'cookies'
+#     'logtostderr': True,
 # }
 
-opts = {
-    'logtostderr': True,
-}
-
-x = open(os.devnull, 'w')
+# x = open(os.devnull, 'w')
 
 # with redirect_stderr(x): # yt-dlp will print the error message to stderr in addition to raising an exception, effectively writing dublicate information to terminal. There are no flags that alter this behavior.
 #     with YoutubeDL(opts) as ydl:

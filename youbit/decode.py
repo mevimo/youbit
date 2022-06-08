@@ -1,9 +1,10 @@
 import numpy as np
 from numba import njit
+from youbit.types import ndarr_1d_uint8
 
 
 @njit('void(uint8[::1], uint8[::1])')
-def _numba_read_bpp1(arr, out):
+def _numba_read_bpp1(arr, out) -> None:
     """ still needs to be packed"""
     ##TODO maybe include the packing anyway
     for i in range(out.size):
@@ -11,7 +12,7 @@ def _numba_read_bpp1(arr, out):
 
 
 @njit('void(uint8[::1], uint8[::1])')
-def _numba_read_bpp2(arr, out):
+def _numba_read_bpp2(arr, out) -> None:
     #! cant get this ( and any of the numba accelerated functions) to scale meaningfully with parallelism... is far from the bottleneck either way
     for i in range(out.size):
         j = i * 4
@@ -19,7 +20,7 @@ def _numba_read_bpp2(arr, out):
     
 
 @njit('void(uint8[::1], uint8[::1])')
-def _numba_read_bpp3(arr, out):
+def _numba_read_bpp3(arr, out) -> None:
     for i in range(out.size//3):
         arr_i = i * 8
         out_x3 = ((arr[arr_i] & 224) << 16) | ((arr[arr_i+1] & 224) << 13) | ((arr[arr_i+2] & 224) << 10) | ((arr[arr_i+3] & 224) << 7) | ((arr[arr_i+4] & 224) << 4) | ((arr[arr_i+5] & 224) << 1) | ((arr[arr_i+6] & 224) >> 2) | ((arr[arr_i+7] & 224) >> 5)
@@ -29,7 +30,7 @@ def _numba_read_bpp3(arr, out):
         out[out_i+2] = out_x3 & 255
 
 
-def read_pixels(arr: np.ndarray[(1,), np.uint8], bpp: int) -> np.ndarray[(1,), np.uint8]:
+def read_pixels(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
     """Expects a numpy ndarray of datatype uint8.
     Each element is expected to represent an entire pixel.
     (gray pixel format).
