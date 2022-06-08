@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 import hashlib
 import os
+from typing import Union
 
 
 def is_url(txt: str) -> bool:
@@ -12,7 +13,7 @@ def is_url(txt: str) -> bool:
         return False
 
 
-def get_md5(file: Path) -> str:
+def get_md5(file: Union[str, Path]) -> str:
     with open(str(file), 'rb') as f:
         filesize = os.fstat(f.fileno()).st_size
         if filesize > 8589934592:

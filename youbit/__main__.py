@@ -20,12 +20,12 @@ import numpy as np
 # from youbit.automate import Uploader
 # from youbit.decode import remove_ecc, extract_frames, extract_binary
 from youbit import encode, decode, util
-from youbit._video_code import VideoDecoder, VideoEncoder
+from youbit.video import VideoDecoder, VideoEncoder
 
 
 class TempdirMixin:
     """Provides a temporary directory to use, as well as managing the cleanup of said directory through various mechanisms.
-    Provides classes implementing this mixin with a `close()` method to clean up the directory, as well as providing a context manager
+    Provides objects with a `close()` method to clean up the directory, as well as providing a context manager
     to enforce the cleanup."""
     def __init__(self):
         self.tempdir = tempfile.mkdtemp(prefix='youbit-')
@@ -141,14 +141,13 @@ class Decoder(TempdirMixin):
             pass
         elif self.input_type == 'path':
             file = self.input
-        video_decoder = VideoDecoder(vid = file)
         frames = []
-        for frame in video_decoder:
+        for frame in VideoDecoder(vid=file):
             frame = decode.read_pixels(frame, bpp)
             frames.append(frame)
-        arr = np.concatenate(frames, dtype=np.uint8)
+        output_arr = np.concatenate(frames, dtype=np.uint8)
         # decrypt and or unzip in-memory
-        arr.tofile(Path(path)) ##TODO: overwrite logic here
+        output_arr.tofile(Path(path)) ##TODO: overwrite logic here
 
     #def verify_checksum
 

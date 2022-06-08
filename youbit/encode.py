@@ -45,7 +45,6 @@ def _numba_transform_bpp2_x64(arr, out, mapping):
 
 @njit('void(uint8[::1], int_, uint8[::1], uint8[::1])', parallel=True)
 #! remove the loop unrolling, div, mapping, floor division, and all the bloat that is unnecessary. Also, it should be tested again if this benefits from parallelism, because i doubt it.
-#! should prob be done when i make (made) the tests for it to verify we did not break everything.
 def _numba_transform_bpp2(arr, div, out, mapping):
     ##TODO maybe allow these functions to handle non-size-conform arrays anyway? should not happen but does not hurt performance.
     ##TODO It does allow the user to use YouBit for weird, alternative resolutions. Might be valuable.

@@ -26,26 +26,23 @@ def test_lastframe_padding():
                 assert (output.size % framesize) == 0
 
 
-def test_transform_array(tempdir):
+def test_transform_array(tempdir, test_arr):
     """WHEN we use the transform_array() function on valid array.
     THEN verify if the returned array is of correct size AND equal to a precalculated and validated array.
     Please note the transform_array() function has exact requirements for the input array's size than need to be followed.
     """
-    arr = [i for i in range(256)] * 8100 # makes the length exactly 2073600, or the sum of pixels in a 1920x1080 frame. 
-    arr = np.array(arr, dtype=np.uint8)
-
     solution_bpp1 = Path(os.getcwd()) / 'testdata' / 'solutions' / 'test_transform_array_solution_bpp1.npy'
-    solution_bpp1 = np.load(str(solution_bpp1))
+    solution_bpp1 = np.load(solution_bpp1)
 
     solution_bpp2 = Path(os.getcwd()) / 'testdata' / 'solutions' / 'test_transform_array_solution_bpp2.npy'
-    solution_bpp2 = np.load(str(solution_bpp2))
+    solution_bpp2 = np.load(solution_bpp2)
 
     solution_bpp3 = Path(os.getcwd()) / 'testdata' / 'solutions' / 'test_transform_array_solution_bpp3.npy'
-    solution_bpp3 = np.load(str(solution_bpp3))
+    solution_bpp3 = np.load(solution_bpp3)
 
     for bpp in (1,2,3):
-        output = encode.transform_array(arr, bpp)
-        desired_size = int(arr.size * 8 / bpp)
+        output = encode.transform_array(test_arr, bpp)
+        desired_size = int(test_arr.size * 8 / bpp)
         assert output.size == desired_size
         if bpp == 1:
             np.testing.assert_array_equal(output, solution_bpp1)
