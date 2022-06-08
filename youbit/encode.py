@@ -1,24 +1,25 @@
 import numpy as np
 from numba import njit, prange
-from pathlib import Path 
+from pathlib import Path
+from typing import Any
 
 
-def load_array(file: Path) -> np.ndarray:
+def load_array(file: Path) -> np.ndarray[(1,), np.uint8]:
     """Reads a file and loads it into a numpy uin8 array."""
     return np.fromfile(file, dtype=np.uint8)
     
 
-def add_lastframe_padding(arr: np.ndarray, res: tuple[int, int], bpp: int) -> np.ndarray:
+def add_lastframe_padding(arr: np.ndarray, target_res: tuple[int, int], bpp: int) -> np.ndarray:
     """Adds zeros to a uint8 numpy array so that it can be divided properly into frames.
-    Amount of padding added depends onthe target resoltuion and target bpp.
+    Amount of padding added depends onthe target resolution and target bpp.
     Sum of pixels of given resolution must be divisible by 8!"""
-    pixel_count = res[0] * res[1]
+    pixel_count = target_res[0] * target_res[1]
     if (pixel_count % 8):
-        raise ValueError(f'The given resolution ({res[0]}x{res[1]}) has a pixel count ({pixel_count}) that is not divisible by 8.')
+        raise ValueError(f'The given resolution ({target_res[0]}x{target_res[1]}) has a pixel count ({pixel_count}) that is not divisible by 8.')
     framesize = int(pixel_count / 8) * bpp
     last_frame_padding = framesize - (arr.size % framesize)
     if last_frame_padding:
-        arr = np.append(arr, np.zeros(last_frame_padding, dtype=np.uint8))
+        arr = np.append(arr, np.zeros(last_frame_padding, dtype=arr.dtype))
     return arr
 
 
@@ -52,7 +53,7 @@ def _numba_transform_bpp2(arr, div, out, mapping):
         _numba_transform_bpp2_x64(arr[i*128:(i*128)+128], out[i*64:(i*64)+64], mapping)
 
 
-def transform_array(arr: np.ndarray, bpp: int) -> np.ndarray:
+def transform_array(arr: np.ndarray[(int,), np.uint8], bpp: int) -> np.ndarray[(int,), np.uint8]:
     """Transforms a uint8 numpy array (0, 255, 38, ..) representing individual bytes
     into a uint8 numpy array representing 8 bit greyscale pixels. Returns a new array.
     The output depends on the 'bpp' (or 'bits per pixel') parameter.

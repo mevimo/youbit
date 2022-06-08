@@ -29,14 +29,14 @@ def _numba_read_bpp3(arr, out):
         out[out_i+2] = out_x3 & 255
 
 
-def read_pixels(arr: np.ndarray, bpp: int) -> np.ndarray:
+def read_pixels(arr: np.ndarray[(1,), np.uint8], bpp: int) -> np.ndarray[(1,), np.uint8]:
     """Expects a numpy ndarray of datatype uint8.
     Each element is expected to represent an entire pixel.
     (gray pixel format).
     
     Requires the input array to be divisible by 8."""
     if arr.size % (bpp * 8):
-        raise ValueError(f'The length of the given array ({arr.size}) is not divisble by 8.')
+        raise ValueError(f'The length of the given array ({arr.size}) is not divisible by 8.')
     if bpp == 1:
         out = np.zeros(arr.size, dtype=np.uint8)
         _numba_read_bpp1(arr, out)

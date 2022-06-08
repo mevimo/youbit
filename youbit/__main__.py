@@ -23,7 +23,7 @@ from youbit import encode, decode, util
 from youbit._video_code import VideoDecoder, VideoEncoder
 
 
-class TempDirMixin:
+class TempdirMixin:
     """Provides a temporary directory to use, as well as managing the cleanup of said directory through various mechanisms.
     Provides classes implementing this mixin with a `close()` method to clean up the directory, as well as providing a context manager
     to enforce the cleanup."""
@@ -51,7 +51,7 @@ class TempDirMixin:
         self.close()
     
 
-class Encoder(TempDirMixin):
+class Encoder(TempdirMixin):
 
     def __init__(self, input: Union[str, Path]) -> None:
         input = Path(input)
@@ -66,7 +66,7 @@ class Encoder(TempDirMixin):
             'original_filename': self.input.name, # prob not necessary
             'original_MD5': util.get_md5(self.input),
         }
-        TempDirMixin.__init__(self)
+        TempdirMixin.__init__(self)
 
     def encode(self, path: Union[str, Path], res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0, overwrite: bool = False) -> None:
         #! if we want to zip and encrypt, we need to do it in-memory really...
@@ -117,7 +117,7 @@ class Encoder(TempDirMixin):
         ## return url
 
     
-class Decoder(TempDirMixin):
+class Decoder(TempdirMixin):
 
     def __init__(self, input: Union[str, Path]):
         if isinstance(input, str) and util.is_url(input):
@@ -128,7 +128,10 @@ class Decoder(TempDirMixin):
             self.input_type = 'path'
         else:
             raise ValueError('A valid filepath or url must be passed, neither was found.')
-        TempDirMixin.__init__(self)
+        TempdirMixin.__init__(self)
+
+    def download(self):
+        pass 
 
     def decode(self, path: Union[str, Path], bpp: int = None, overwrite: bool = False):
         # bpp is autofilled if youbit also downloads the file.
