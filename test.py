@@ -15,21 +15,28 @@ import cv2
 
 import re
 
-
-
-
 from youbit import Encoder, Decoder
 from youbit.video import VideoDecoder
 from youbit import util
 
 
-result = util.test_error_rate(
-    'E:/testok.jpg',
+
+
+# Encoder('E:/test2.jpg').encode('E:/INPUTFORYT.mp4', bpp=1, overwrite=True)
+
+# Decoder('E:/test2bpp1.mkv').decode('E:/test2bpp1.jpg', bpp=1, overwrite=True)
+
+
+result = util.compare_files(
+    'E:/test2bpp1.jpg',
     'E:/test2.jpg'
 )
 for k,v in result.items():
     print(k, v)
     print()
+
+
+
 
 # for frame in VideoDecoder(Path('E:/dev/youbit/test2.jpg.mkv')):
 #     pass
@@ -45,7 +52,7 @@ for k,v in result.items():
 
 
 
-# URL = 'https://youtu.be/5imKFYIfIIQ'
+URL = 'https://youtu.be/9QX5b1vtfLA'
 # # opts = {
 # #     'cookiesfrombrowser': ('chrome', ),
 # #     'cookiefile': 'cookies'
@@ -59,20 +66,21 @@ for k,v in result.items():
 
 # with redirect_stderr(x): # yt-dlp will print the error message to stderr in addition to raising an exception, effectively writing dublicate information to terminal. There are no flags that alter this behavior.
 #     with YoutubeDL(opts) as ydl:
-        # try:
-        #     info = ydl.extract_info(URL, download=False)
-        # except DownloadError as e:
-        #     raise ValueError(f'Passed url is invalid: {e}')
-        # ydl.download([URL])
+#         try:
+#             info = ydl.extract_info(URL, download=False)
+#         except DownloadError as e:
+#             raise ValueError(f'Passed url is invalid: {e}')
+#         ydl.download([URL])
 
 
 # opts = {
 #     'logtostderr': True,
 #     'format_sort': ['vext', 'vbr']
 # }
+# x = open(os.devnull, 'w')
 # with redirect_stderr(x):
 #     with YoutubeDL(opts) as ydl:
-#         info = ydl.extract_info(URL, download=False)
+#         # info = ydl.extract_info(URL, download=False)
 #         ydl.download([URL])
 
 

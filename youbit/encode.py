@@ -4,11 +4,6 @@ from pathlib import Path
 from typing import Any, Literal
 import numpy.typing as npt
 from youbit.types import ndarr_1d_uint8, ndarr_any
-
-
-def load_array(file: Path) -> ndarr_1d_uint8:
-    """Reads a file and loads it into a numpy uin8 array."""
-    return np.fromfile(file, dtype=np.uint8)
     
 
 def add_lastframe_padding(arr: ndarr_any, target_res: tuple[int, int], bpp: int) -> ndarr_any:

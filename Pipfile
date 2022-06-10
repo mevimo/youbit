@@ -18,6 +18,8 @@ ffmpeg-python = "*"
 imageio = "*"
 av = "*"
 numba = "*"
+cython = "*"
+reedsolo = "*"
 
 [dev-packages]
 ipykernel = "*"

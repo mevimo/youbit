@@ -6,12 +6,13 @@ __version__ = "0.1.0"
 __author__ = "Florian Laporte"
 __license__ = "MIT License"
 
-from youbit.__main__ import Encoder, Decoder
+from youbit.youbit import Encoder, Decoder
 import youbit.encode as _encode
 import youbit.decode as _decode
 import youbit.util as _util
 import youbit.video as _video
-__all__ = ['Encoder', 'Decoder', '_encode', '_decode', '_util', '_video']
+import youbit.ecc.ecc as _ecc
+__all__ = ['Encoder', 'Decoder', '_encode', '_decode', '_video', '_util', '_ecc']
 
 
 
