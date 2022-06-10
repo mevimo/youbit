@@ -61,14 +61,14 @@ class Encoder(TempdirMixin):
         if not self.input.is_file():
             raise ValueError('You must provide a file.')
         if os.path.getsize(self.input) > 1000000000:
-            raise ValueError('File too large. Only files up to 1GB are currently supported.')
+            raise ValueError('File too large. Only files up to 1GB are currently supported.') #! raise or remove limit once chunking is in place
         self.metadata: dict[str, Any] = {
             'original_filename': self.input.name, # prob not necessary
             'original_MD5': util.get_md5(self.input),
         }
         TempdirMixin.__init__(self)
 
-    def encode(self, path: Optional[Union[str, Path]] = None, overwrite: bool = False, ecc: Optional[int] = 32, res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0) -> None:
+    def encode(self, path: Optional[Union[str, Path]] = None, overwrite: bool = False, ecc: Optional[int] = 32, res: tuple[int, int] = (1920, 1080), bpp: int = 1, crf: int = 0) -> None:
         #! if we want to zip and encrypt, we need to do it in-memory really...
         """Encodes a file into a YouBit video.
         
@@ -94,7 +94,6 @@ class Encoder(TempdirMixin):
         """
         video_encoder = VideoEncoder( # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
             output = Path(path) if path else (self.tempdir / 'encoded.mp4'),
-            framerate = framerate,
             res = res,
             crf = crf,
             overwrite = overwrite if path else True
@@ -103,7 +102,6 @@ class Encoder(TempdirMixin):
             data = util.load_bytes(self.input)
             data = ecc_encode(data, ecc)
             arr = np.frombuffer(data, dtype=np.uint8)
-            self.metadata['ecc'] = True
             self.metadata['ecc_symbols'] = ecc
         else:
             arr = util.load_ndarray(self.input)
@@ -112,16 +110,20 @@ class Encoder(TempdirMixin):
         with video_encoder as video:
             video.feed(arr)
         self.metadata['bpp'] = bpp
+        self.metadata['resolution'] = f'{res[0]}x{res[1]}'
 
-    def encode_and_upload(self, res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0) -> str:
-        video_path = self.tempdir / 'encoded.mp4'
-        self.encode(
-            path = video_path,
-            res = res,
-            bpp = bpp,
-            framereate = framerate,
-            crf = crf
-        )
+    def upload(self) -> str:
+        pass
+
+    # def encode_and_upload(self, res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0) -> str:
+    #     video_path = self.tempdir / 'encoded.mp4'
+    #     self.encode(
+    #         path = video_path,
+    #         res = res,
+    #         bpp = bpp,
+    #         framereate = framerate,
+    #         crf = crf
+    #     )
         ## some upload stuff
         ## return url
 
@@ -137,9 +139,11 @@ class Decoder(TempdirMixin):
             self.input_type = 'path'
         else:
             raise ValueError('A valid filepath or url must be passed, neither was found.')
+        ##TODO get video info and metadata from commets, load metadata dict here
         TempdirMixin.__init__(self)
 
     def download(self):
+        # MAKE SURE resoltuion is currect comapred to emetadata so we are not downloading an SD version while the HD version is still processing
         pass
 
     def decode(self, path: Union[str, Path], bpp: Optional[int] = None, overwrite: bool = False):
