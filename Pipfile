@@ -20,9 +20,12 @@ av = "*"
 numba = "*"
 cython = "*"
 reedsolo = "*"
+pylint = "*"
+mypy = "*"
 
 [dev-packages]
 ipykernel = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.9"

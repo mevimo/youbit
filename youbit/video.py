@@ -66,7 +66,7 @@ class VideoDecoder:
 
     def get_frame(self) -> ndarr_1d_uint8:
         frame: Any = next(self.frames)
-        if not ((frame.index-11) % 17): ## The frames at index 11, 28, 45, 64... (the 12th + interval of 17) are duplicate keyframes and must be skipped. 
+        if not ((frame.index - 11) % 17):  # The frames at index 11, 28, 45, 64... (the 12th + interval of 17) are duplicate keyframes and must be skipped.
             frame = next(self.frames)
         arr: ndarr_1d_uint8 = frame.to_ndarray(format='gray').ravel()
         return arr

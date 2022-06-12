@@ -22,14 +22,18 @@ import numpy as np
 from youbit import encode, decode, util
 from youbit.ecc.ecc import ecc_encode, ecc_decode
 from youbit.video import VideoDecoder, VideoEncoder
+from youbit.download import Downloader
 
 
 class TempdirMixin:
-    """Provides a temporary directory to use, as well as managing the cleanup of said directory through various mechanisms.
-    Provides objects with a `close()` method to clean up the directory, as well as providing a context manager
-    to enforce the cleanup."""
+    """Provides a temporary directory to use, as well as managing the cleanup
+    of said directory through various mechanisms.
+    Provides objects with a `close()` method to clean up the directory, as
+    well as providing a context manager to enforce the cleanup.
+    """
+
     def __init__(self) -> None:
-        self.tempdir = tempfile.mkdtemp(prefix='youbit-')
+        self.tempdir = tempfile.mkdtemp(prefix="youbit-")
         atexit.register(self.close)
         signal.signal(signal.SIGTERM, self.close)
         signal.signal(signal.SIGINT, self.close)
@@ -48,69 +52,90 @@ class TempdirMixin:
         self.close()
 
     def __del__(self) -> None:
-        #NOTE: `__del__` is very disliked and for good reason, but this is just complimentary functionality in case it might ever catch an edge-case not caught by the other mechanisms.
+        # NOTE: `__del__` is very disliked and for good reason, but this is
+        # just complimentary functionality in case it might ever catch an
+        # edge-case not caught by the other mechanisms.
         self.close()
-    
+
 
 class Encoder(TempdirMixin):
-
     def __init__(self, input: Union[str, Path]) -> None:
         self.input = Path(input)
         if not self.input.exists():
-            raise ValueError(f"Invalid input argument '{input}'. Must be a valid file location.")
+            raise ValueError(
+                f"Invalid input argument '{input}'. Must be a valid file location."
+            )
         if not self.input.is_file():
-            raise ValueError('You must provide a file.')
+            raise ValueError("You must provide a file.")
         if os.path.getsize(self.input) > 1000000000:
-            raise ValueError('File too large. Only files up to 1GB are currently supported.') #! raise or remove limit once chunking is in place
+            raise ValueError(
+                "File too large. Only files up to 1GB are currently supported."
+            )  #! raise or remove limit once chunking is in place
         self.metadata: dict[str, Any] = {
-            'original_filename': self.input.name, # prob not necessary
-            'original_MD5': util.get_md5(self.input),
+            "original_filename": self.input.name,  # prob not necessary ##todo remove
+            "original_MD5": util.get_md5(self.input),
         }
         TempdirMixin.__init__(self)
 
-    def encode(self, path: Optional[Union[str, Path]] = None, overwrite: bool = False, ecc: Optional[int] = 32, res: tuple[int, int] = (1920, 1080), bpp: int = 1, crf: int = 0) -> None:
+    def encode(
+        self,
+        path: Optional[Union[str, Path]] = None,
+        overwrite: bool = False,
+        ecc: Optional[int] = 32,
+        res: tuple[int, int] = (1920, 1080),
+        bpp: int = 1,
+        crf: int = 0,
+    ) -> None:
         #! if we want to zip and encrypt, we need to do it in-memory really...
         """Encodes a file into a YouBit video.
-        
-        :param path: Use this parameter if you want to upload the video yourself; YouBit will save it at the specified path.
+
+        :param path: Use this parameter if you want to upload the
+            video yourself. YouBit will save it at the specified path.
         :type path: str or pathlike object, optional
-        :param overwrite: If parameter `path` is specified, this parameter can be used to allow overwriting files at target location, defaults to False.
+        :param overwrite: If parameter `path` is specified, this parameter can
+            be used to allow overwriting files at target location, defaults to
+            False.
         :type overwrite: bool, optional
-        :param ecc: How many ecc symbols to use for the reed-solomon encoding. Set to 0 to skip ecc encoding.
+        :param ecc: How many ecc symbols to use for the reed-solomon encoding.
+            Set to 0 to skip ecc encoding.
         :type ecc: int, optional
-        :param res: Target resolution (width, height) of video. Sum of pixels (width * height) must be divisible by 8. Defaults to (1920, 1080)
+        :param res: Target resolution (width, height) of video. Sum of pixels
+            (width * height) must be divisible by 8. Defaults to (1920, 1080)
         :type res: tuple, optional
-        :param bpp: Target 'bpp' of 'bits per pixel'. How many bits of information should be saved per pixel of video. Defaults to 2
+        :param bpp: Target 'bpp' of 'bits per pixel'. How many bits of
+            information should be saved per pixel of video. Defaults to 2
         :type bpp: int, optional
         :param framerate: XXXXXXXXXXXXXXXXXXX, defaults to 1
         :type framrate: int, optional
         :param crf: XXXXXXXXXXXXXXXXXX, defaults to 0
         :type crf: int, optional
-        :raises ValueError: If pixelsum of given argument res (width * height) is not divisible by 8
-        :raises ValueError: If argument crf is not in the range 0-52 inclusive
-        :raises ValueError: If argument bpp is an unsupported value
-        :raises FileNotFoundError: If argument path is an invalid filepath
-        :raises FileExistsError: If argument path points to an already existing file
+        :raises ValueError: If pixelsum of given argument res (width * height)
+            is not divisible by 8.
+        :raises ValueError: If argument crf is not in the range 0-52 inclusive.
+        :raises ValueError: If argument bpp is an unsupported value.
+        :raises FileNotFoundError: If argument path is an invalid filepath.
+        :raises FileExistsError: If argument path points to an already
+            existing file.
         """
-        video_encoder = VideoEncoder( # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
-            output = Path(path) if path else (self.tempdir / 'encoded.mp4'),
-            res = res,
-            crf = crf,
-            overwrite = overwrite if path else True
+        video_encoder = VideoEncoder(  # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
+            output=Path(path) if path else (self.tempdir / "encoded.mp4"),
+            res=res,
+            crf=crf,
+            overwrite=overwrite if path else True,
         )
         if ecc:
             data = util.load_bytes(self.input)
             data = ecc_encode(data, ecc)
             arr = np.frombuffer(data, dtype=np.uint8)
-            self.metadata['ecc_symbols'] = ecc
+            self.metadata["ecc_symbols"] = ecc
         else:
             arr = util.load_ndarray(self.input)
         arr = encode.add_lastframe_padding(arr, res, bpp)
         arr = encode.transform_array(arr, bpp)
         with video_encoder as video:
             video.feed(arr)
-        self.metadata['bpp'] = bpp
-        self.metadata['resolution'] = f'{res[0]}x{res[1]}'
+        self.metadata["bpp"] = bpp
+        self.metadata["resolution"] = f"{res[0]}x{res[1]}"
 
     def upload(self) -> str:
         pass
@@ -124,45 +149,48 @@ class Encoder(TempdirMixin):
     #         framereate = framerate,
     #         crf = crf
     #     )
-        ## some upload stuff
-        ## return url
+    ## some upload stuff
+    ## return url
 
-    
+
 class Decoder(TempdirMixin):
-
     def __init__(self, input: Union[str, Path]):
         if isinstance(input, str) and util.is_url(input):
             self.input = input
-            self.input_type = 'url'
+            self.input_type = "url"
+            self.downloader = Downloader(self.input)
+            self.metadata = self.downloader.get_metadata()
         elif Path(input).exists() and Path(input).is_file():
             self.input = Path(input)
-            self.input_type = 'path'
+            self.input_type = "path"
         else:
-            raise ValueError('A valid filepath or url must be passed, neither was found.')
-        ##TODO get video info and metadata from commets, load metadata dict here
+            raise ValueError(
+                "A valid filepath or url must be passed, neither was found."
+            )
         TempdirMixin.__init__(self)
 
     def download(self):
-        # MAKE SURE resoltuion is currect comapred to emetadata so we are not downloading an SD version while the HD version is still processing
-        pass
+        if self.input_type != 'url':
+            raise ValueError('You must initialize this object with a URL if you want to download anything.')
+        self.downloader.download(self.tempdir, self.tempdir)
 
-    def decode(self, path: Union[str, Path], bpp: Optional[int] = None, overwrite: bool = False):
+    def decode(self, path: Union[str, Path], ecc: Optional[int], bpp: Optional[int] = None, overwrite: bool = False):
         # bpp is autofilled if youbit also downloads the file.
-        if self.input_type == 'url':
-            #download video, to tempdir
+        if self.input_type == "url":
+            # download video, to tempdir
             # file = downloaded video
             pass
-        elif self.input_type == 'path':
+        elif self.input_type == "path":
             file = self.input
         frames = []
-        for frame in VideoDecoder(vid=file):
+        for frame in VideoDecoder(vid=file, overwrite=overwrite):
             frame = decode.read_pixels(frame, bpp)
             frames.append(frame)
         output_arr = np.concatenate(frames, dtype=np.uint8)
         # decrypt and or unzip in-memory
-        output_arr.tofile(Path(path)) ##TODO: overwrite logic here
+        output_arr.tofile(Path(path))  ##TODO: overwrite logic here
 
-    #def verify_checksum
+    # def verify_checksum
 
 
 # class YouBit:
@@ -170,7 +198,7 @@ class Decoder(TempdirMixin):
 #     def __init__(self, input: Union[str, Path]) -> None:
 #         # add size constraints?
 #         if util.is_url(input):
-            
+
 #             # prob get metadata as well imeeadiately?
 #             # "etadata might change ebfore we download, downside
 #             # we have access before calling download, upside
@@ -193,13 +221,13 @@ class Decoder(TempdirMixin):
 #                 raise ValueError(f"No file was not found at '{str(input)}'.")
 #             else:
 #                 raise ValueError(f"Invalid input argument '{input}'. Must be a valid file location or valid URL.")
-        
+
 
 #         # Catch as many signals as possible to ensure _handle_exit() is called on exit.
 #         atexit.register(self._handle_exit)
 #         signal.signal(signal.SIGTERM, self._handle_exit)
 #         signal.signal(signal.SIGINT, self._handle_exit)
-    
+
 #     def down(self, url: str, path: Union[str, Path], overwrite: bool = False) -> None:
 #         """Downloads a YouBit video, decodes it, and saves it.
 #         Check md5 by...
@@ -222,7 +250,7 @@ class Decoder(TempdirMixin):
 
 #     def encode_local(self, path: Union[str, Path], res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0, overwrite: bool = False) -> None:
 #         """Encodes a local file into a YouBit video.
-        
+
 #         :param path: Target location for encoded file.
 #         :type path: str or pathlike object.
 #         :param res: Target resolution (width, height) of video. Sum of pixels (width * height) must be divisible by 8. Defaults to (1920, 1080).
@@ -275,7 +303,7 @@ class Decoder(TempdirMixin):
 #         path = Path(path)
 #         arr.tofile(path)
 #         self.output_path = path
-        
+
 #     def _handle_exit(self) -> None:
 #         """Cleanup of temporary files."""
 #         try:
@@ -291,17 +319,6 @@ class Decoder(TempdirMixin):
 #     @property
 #     def output_md5(self) -> str:
 #         """Returns the MD5 checksum of a decoded file. Can only be called after decoding a file."""
-
-
-
-
-            
-            
-
-
-
-
-
 
 
 # class Encoder:
@@ -396,10 +413,10 @@ class Decoder(TempdirMixin):
 #             with ZipFile(location, 'w') as zip:
 #                 shutil.copy(readme_location, zip)
 #                 json.dump(self._metadata, zip)
-            
+
 
 #         self._handle_exit()
-    
+
 #     def _handle_exit(self) -> None:
 #         """Cleanup of temporary files."""
 #         try:
@@ -438,7 +455,7 @@ class Decoder(TempdirMixin):
 
 
 # class Decoder:
-    
+
 #     def __init__(self, url: Union[str, Path]) -> None:
 #         if isinstance(url, PurePath) and url.exists():
 #             self._original = url
@@ -450,7 +467,7 @@ class Decoder(TempdirMixin):
 #                 self._yt = YouTube(self.url)
 #                 self._stream = self.yt.streams.filter(adaptive=True, type='video')
 #                 self._stream = self.stream.order_by('resolution').last() ##TODO: get 1080p secifically instead of highest res, in case that the video has not finished processing yet
-#                 self._metadata = json.loads(self.yt.description.strip()) 
+#                 self._metadata = json.loads(self.yt.description.strip())
 #             except:
 #                 raise ValueError('Incorrect URL or video not available.') #TODO: check why VideoUnavailable wasnt recognized as exception, low priority
 

@@ -18,6 +18,40 @@ import re
 from youbit import Encoder, Decoder
 from youbit.video import VideoDecoder
 from youbit import util
+from youbit.download import Downloader
+
+
+
+
+x = Downloader('https://youtu.be/6IbYKM0ukrc')
+x.download('E:/testy/', 'E:/testy/')
+
+
+
+# def print_formats(info: dict):
+#     for k,v in info.items():
+#         if k == 'formats':
+#             for i in v:
+#                 if i['height'] == 1080:
+#                     print('format id: ' + i.get('format_id'))
+#                     print('vbr: ' + str(i.get('vbr')))
+#                     print('quality: ' + str(i.get('quality')))
+#                     print('resolution: ' + i.get('resolution'))
+#                     print('video extension: ' + i.get('video_ext'))
+#                     print('audio extension: ' + i.get('audio_ext'))
+#                     print('fps: ' + str(i.get('fps')))
+#                     print()
+
+
+
+
+# x = Downloader('https://www.youtube.com/watch?v=LkwiwEy2mvg')
+# # print_formats(x.info)
+# print(x.info['id'])
+# print(x.info['title'])
+# print(x.info['description'])
+# for k,v in x.info.items():
+#     print(k,v)
 
 
 
@@ -74,53 +108,46 @@ URL = 'https://youtu.be/9QX5b1vtfLA'
 
 
 
-def format_selector(ctx):
-    formats = ctx.get('formats')
-    correct_resolution = [f for f in formats if f['resolution'] == '']
-
-    yield {
-        'format_id': f'',
-    }
 
 
-opts = {
-    'logtostderr': True,
-    # 'format': format_selector,
-    # 'format_sort': ['vext', 'vbr']
-}
-x = open(os.devnull, 'w')
-with redirect_stderr(x):
-    with YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(URL, download=False)
-        # ydl.download([URL])
+# opts = {
+#     'logtostderr': True,
+#     # 'format': format_selector,
+#     # 'format_sort': ['vext', 'vbr']
+# }
+# x = open(os.devnull, 'w')
+# with redirect_stderr(x):
+#     with YoutubeDL(opts) as ydl:
+#         info = ydl.extract_info(URL, download=False)
+#         # ydl.download([URL])
 
 
-# print(info['vbr'])
+# # print(info['vbr'])
 
 
-for k,v in info.items():
-    if k == 'formats':
-        print(v[-1])
+# for k,v in info.items():
+#     if k == 'formats':
+#         print(v[-1])
 
-        for i in v:
-            if i['height'] == 1080:
-                print('format id: ' + i.get('format_id'))
-                print('vbr: ' + str(i.get('vbr')))
-                print('quality: ' + str(i.get('quality')))
-                print('resolution: ' + i.get('resolution'))
-                print('video extension: ' + i.get('video_ext'))
-                print('audio extension: ' + i.get('audio_ext'))
-                print('fps: ' + str(i.get('fps')))
+#         for i in v:
+#             if i['height'] == 1080:
+#                 print('format id: ' + i.get('format_id'))
+#                 print('vbr: ' + str(i.get('vbr')))
+#                 print('quality: ' + str(i.get('quality')))
+#                 print('resolution: ' + i.get('resolution'))
+#                 print('video extension: ' + i.get('video_ext'))
+#                 print('audio extension: ' + i.get('audio_ext'))
+#                 print('fps: ' + str(i.get('fps')))
 
-                print()
+#                 print()
     
-            # print(i)
+#             # print(i)
         
-        print('correct res:::::::::::::::')
-        correct_res = [i for i in v if i['resolution'] == '1920x1080']
-        correct_res.sort(reverse=True, key = lambda x : x['vbr'])
-        print(correct_res[0])
-        # print(v)
+#         print('correct res:::::::::::::::')
+#         correct_res = [i for i in v if i['resolution'] == '1920x1080']
+#         correct_res.sort(reverse=True, key = lambda x : x['vbr'])
+#         print(correct_res[0])
+#         # print(v)
 
 
 
