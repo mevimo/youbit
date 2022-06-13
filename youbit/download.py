@@ -1,6 +1,6 @@
 import os
 from contextlib import redirect_stderr
-from typing import Union
+from typing import Union, Any, Optional
 from pathlib import Path
 
 from yt_dlp import YoutubeDL
@@ -33,7 +33,7 @@ class Downloader:
         """Checks the passed URL and gets metadata.
         Can take a moment."""
         self.url = url
-        self.opts = {
+        self.opts: dict[str, Any] = {
             "logtostderr": True,
             'restrictfilenames': True,
             'windowsfilenames': True
@@ -49,7 +49,7 @@ class Downloader:
             raise InvalidYTDescription from e
         self.opts["format"] = self._format_selector
 
-    def _format_selector(self, ctx: dict) -> dict:
+    def _format_selector(self, ctx: dict[Any, Any]) -> dict[Any, Any]:
         """Custom format selector for yt_dlp.
         Selects only formats witht the correct resolution, returning
         the one with the highest vide bitrate (vbr).
@@ -59,14 +59,16 @@ class Downloader:
         :return: The selected format(s), for yt_dlp.
         :rtype: Iterator[dict]
         """
-        formats = ctx.get("formats")
+        formats: Optional[dict[Any, Any]] = ctx.get("formats")
+        if not formats:
+            raise RuntimeError('No formats found for download.')
         desired_resolution = self._yb_metadata['resolution']
-        formats = [
+        usable_formats = [
             f for f in formats if f["resolution"] == desired_resolution
         ]
         if len(formats) == 0:
             raise StillProcessingError
-        formats.sort(reverse=True, key=lambda f: f["vbr"])
+        usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
         best = formats[0]
         yield best
 
@@ -87,6 +89,6 @@ class Downloader:
         file = [f for f in Path(output).iterdir() if f.is_file() and f.suffix in ('.mp4', '.mkv')][0]  # Assumes there to be no other .mp4 or .mkv files in the given output directory
         return file
 
-    def get_metadata(self) -> dict:
+    def get_metadata(self) -> dict[Any, Any]:
         """Returns the YouBit metadata extract from the video description."""
         return self._yb_metadata.copy()

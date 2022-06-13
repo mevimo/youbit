@@ -72,8 +72,7 @@ class Encoder(TempdirMixin):
                 "File too large. Only files up to 1GB are currently supported."
             )  #! raise or remove limit once chunking is in place
         self.metadata: dict[str, Any] = {
-            "original_filename": self.input.name,  # prob not necessary ##todo remove
-            "original_MD5": util.get_md5(self.input),
+            "original_MD5": util.get_md5(self.input)
         }
         TempdirMixin.__init__(self)
 
@@ -137,7 +136,8 @@ class Encoder(TempdirMixin):
         self.metadata["bpp"] = bpp
         self.metadata["resolution"] = f"{res[0]}x{res[1]}"
 
-    def upload(self) -> str:
+    def upload(self, title: str) -> str:
+        # title of video?
         pass
 
     # def encode_and_upload(self, res: tuple[int, int] = (1920, 1080), bpp: int = 2, framerate: int = 1, crf: int = 0) -> str:
@@ -156,10 +156,11 @@ class Encoder(TempdirMixin):
 class Decoder(TempdirMixin):
     def __init__(self, input: Union[str, Path]):
         if isinstance(input, str) and util.is_url(input):
-            self.input = input
+            self.input: Union[str, Path] = input
             self.input_type = "url"
             self.downloader = Downloader(self.input)
             self.metadata = self.downloader.get_metadata()
+            self.downloaded: Optional[Path] = None
         elif Path(input).exists() and Path(input).is_file():
             self.input = Path(input)
             self.input_type = "path"
@@ -168,29 +169,47 @@ class Decoder(TempdirMixin):
                 "A valid filepath or url must be passed, neither was found."
             )
         TempdirMixin.__init__(self)
+        self.new_md5: Optional[str] = None
 
-    def download(self):
+    def download(self) -> None:  #TODO add an option to download video to local?
         if self.input_type != 'url':
             raise ValueError('You must initialize this object with a URL if you want to download anything.')
-        self.downloader.download(self.tempdir, self.tempdir)
+        path = self.downloader.download(self.tempdir, self.tempdir)
+        self.downloaded = path
 
-    def decode(self, path: Union[str, Path], ecc: Optional[int], bpp: Optional[int] = None, overwrite: bool = False):
+    def decode(self, path: Union[str, Path], ecc: Optional[int], bpp: Optional[int] = None, overwrite: bool = False) -> Path:
         # bpp is autofilled if youbit also downloads the file.
         if self.input_type == "url":
-            # download video, to tempdir
-            # file = downloaded video
-            pass
+            if not self.downloaded:
+                raise ValueError('Video has not yet been downloaded.')  ## todo should not be valueerrror
+            file = self.downloaded
+            ecc = self.metadata['ecc_symbols']
+            bpp = self.metadata['bpp']
         elif self.input_type == "path":
-            file = self.input
+            file = self.input  # type: ignore
+            if bpp is None:
+                raise ValueError('Missing argument: bpp')
+            if ecc is None:
+                raise ValueError('Missing argument: ecc')
         frames = []
-        for frame in VideoDecoder(vid=file, overwrite=overwrite):
+        for frame in VideoDecoder(vid=file):
             frame = decode.read_pixels(frame, bpp)
             frames.append(frame)
         output_arr = np.concatenate(frames, dtype=np.uint8)
         # decrypt and or unzip in-memory
-        output_arr.tofile(Path(path))  ##TODO: overwrite logic here
+        output_arr.tofile(str(path))  ##TODO: overwrite logic here maybe use normal writing bytes or smthn
+        self.new_md5 = util.get_md5(path)
+        ##todo delete original video
 
-    # def verify_checksum
+    def verify_checksum(self) -> bool:
+        """Compares the MD5 checksum of the original file to
+        the MD5 of the newly decoded file.
+
+        :return: Are the checksums equal?
+        :rtype: bool
+        """
+        equal: bool = self.metadata['original_MD5'] == self.new_md5
+        return equal
 
 
 # class YouBit:
