@@ -128,13 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-##TODO: remove on production
-# Random dev
-testinggrounds.ipynb
-testy.py
-bin/ffmpeg.exe
-OUTPUT.mp4
-outputty.mp4
-test2.jpg.mkv
-youtubeoutputmkv.mkv
-ytoutputwebm.webm
+# vscode
+.vscode/
