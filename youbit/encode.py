@@ -1,8 +1,10 @@
-import numpy as np
-from numba import njit, prange
 from pathlib import Path
 from typing import Any, Literal
+
+import numpy as np
 import numpy.typing as npt
+from numba import njit, prange
+
 from youbit.types import ndarr_1d_uint8, ndarr_any
     
 

@@ -1,10 +1,12 @@
 """
 This file (test_decode.py) contains unit tests for the decode.py file.
 """
-from youbit import decode
 from pathlib import Path
 import os
+
 import numpy as np
+
+from youbit import decode
 
 
 def test_read_pixels(test_arr):

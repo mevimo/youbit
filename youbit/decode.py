@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+
 from youbit.types import ndarr_1d_uint8
 
 

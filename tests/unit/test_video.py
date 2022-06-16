@@ -1,13 +1,15 @@
 """
 This file (test_video.py) contains unit tests for the video.py file.
 """
+from pathlib import Path
+import os
+import warnings
+
+import numpy as np
+
 from youbit.video import VideoEncoder, VideoDecoder
 from youbit.encode import add_lastframe_padding
 from youbit import util
-from pathlib import Path
-import numpy as np
-import os
-import warnings
 
 
 C_TEST_VIDEO_ENCODE_MD5_SOLUTION = "0dd13976862d4c1a5a5109c2825b8463"

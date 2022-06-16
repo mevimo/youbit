@@ -5,7 +5,6 @@ from pathlib import Path
 import os
 import requests
 
-
 from youbit.upload import Uploader
 from tests.conftest import uploads
 

@@ -6,8 +6,8 @@ import os
 import time
 
 from youbit import Encoder, Decoder
-from tests.conftest import uploads
 from youbit.download import StillProcessingError
+from tests.conftest import uploads
 
 
 @uploads

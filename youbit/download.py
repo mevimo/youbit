@@ -81,7 +81,6 @@ class Downloader:
             raise StillProcessingError
         usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
         best = usable_formats[0]
-        print(usable_formats)
         yield best
 
     def download(self, output: Union[str, Path], temp: Optional[Union[str, Path]] = None) -> Path:

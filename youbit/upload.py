@@ -108,21 +108,6 @@ class Uploader:
             By.ID, "radioLabel"
         ).click()
 
-        # status = self.browser.find_element_by_xpath(
-        #     "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span"
-        # )
-        # while 'Uploading' in status.text:
-        #     if callback:
-        #         try:
-        #             pos = int(status.text[10:12])
-        #         except IndexError:
-        #             pos = 0
-        #         callback(pos, 100)
-        #     time.sleep(0.5)
-        # while status.text != "Checks complete. No issues found.":
-        #     time.sleep(1)
-
-
         def url_not_empty(driver):
             return driver.find_element(
                 By.CSS_SELECTOR, ".video-url-fadeable > .ytcp-video-info"
