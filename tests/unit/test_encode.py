@@ -1,10 +1,13 @@
 """
 This file (test_encode.py) contains unit tests for the encode.py file.
 """
-from youbit import encode
 from pathlib import Path
 import os
+import requests
+
 import numpy as np
+
+from youbit import encode
 
 
 def test_lastframe_padding():

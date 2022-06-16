@@ -23,6 +23,13 @@ class StillProcessingError(Exception):
         super().__init__(msg, *args, **kwargs)
 
 
+class VideoUnavailableError(Exception):
+    """This exception is raised when YouBit could not download a video because it is not available (anymore).
+    It is still a valid YouTube URL."""
+    def __init__(self, *args, msg='Video is not available (anymore)', **kwargs):  # pylint: disable=useless-super-delegation
+        super().__init__(msg, *args, **kwargs)
+
+
 class Downloader:
     """Can downloads YouTube video's, automatically grabs the optimal format for YouBit.
     Also exposes the `get_metadata` property which returns the YouBit-specific metadata,
@@ -42,7 +49,10 @@ class Downloader:
             try:
                 self._stream_info = ydl.extract_info(url, download=False)
             except DownloadError as e:
-                raise DownloadError(f"Passed URL is invalid: {e}") from e
+                if 'video unavailable' in str(e).lower():
+                    raise VideoUnavailableError from e
+                else:
+                    raise e
         try:
             self._yb_metadata = util.b64_to_dict(self._stream_info["description"])
         except Exception as e:
@@ -59,6 +69,7 @@ class Downloader:
         :return: The selected format(s), for yt_dlp.
         :rtype: Iterator[dict]
         """
+
         formats: Optional[dict[Any, Any]] = ctx.get("formats")
         if not formats:
             raise RuntimeError('No formats found for download.')
@@ -66,13 +77,14 @@ class Downloader:
         usable_formats = [
             f for f in formats if f["resolution"] == desired_resolution
         ]
-        if len(formats) == 0:
+        if len(usable_formats) == 0:
             raise StillProcessingError
         usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
-        best = formats[0]
+        best = usable_formats[0]
+        print(usable_formats)
         yield best
 
-    def download(self, temp: Union[str, Path], output: Union[str, Path]) -> Path:
+    def download(self, output: Union[str, Path], temp: Optional[Union[str, Path]] = None) -> Path:
         """Downloads the video in question.
 
         :param temp: The path where the file are saved during download.
@@ -81,12 +93,13 @@ class Downloader:
         :type output: Union[str, Path]
         """
         self.opts['paths'] = {
-            'temp': str(temp),
             'home': str(output)
         }
+        if temp:
+            self.opts['paths']['temp'] = str(temp)
         with open(os.devnull, "wb") as devnull, redirect_stderr(devnull), YoutubeDL(self.opts) as ydl:
             ydl.download([self.url])
-        file = [f for f in Path(output).iterdir() if f.is_file() and f.suffix in ('.mp4', '.mkv')][0]  # Assumes there to be no other .mp4 or .mkv files in the given output directory
+        file = [f for f in Path(output).iterdir() if f.is_file() and f.suffix in ('.mp4', '.mkv')][0]  # Assumes there to be no other .mp4 or .mkv files in the given output directory # and f.suffix in ('.mp4', '.mkv')
         return file
 
     def get_metadata(self) -> dict[Any, Any]:

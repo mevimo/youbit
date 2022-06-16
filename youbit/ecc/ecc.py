@@ -15,7 +15,7 @@ def ecc_encode(data: bytes, symbols: int = 32) -> bytes:
     """
     if not 0 < symbols < 255:
         raise ValueError(f'Invalid symbols argument: {symbols}. Must be between 0 and 255 exclusive.') 
-    return RSCodec(symbols).encode(data) # type: ignore
+    return RSCodec(symbols).encode(data)  # type: ignore
 
 
 def ecc_decode(data: bytes, symbols: int) -> bytes:
@@ -32,4 +32,4 @@ def ecc_decode(data: bytes, symbols: int) -> bytes:
     """
     if not 0 < symbols < 255:
         raise ValueError(f'Invalid symbols argument: {symbols}. Must be between 0 and 255 exclusive.') 
-    return RSCodec(symbols).decode(data)[0] # type: ignore
+    return RSCodec(symbols).decode(data)[0]  # type: ignore

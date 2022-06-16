@@ -12,13 +12,13 @@ from youbit.types import ndarr_1d_uint8
 
 
 def dict_to_b64(obj: dict[Any, Any]) -> str:
-    """Pickles a dictionary, encodes the output in base64 and returns the result."""
-    return base64.b64encode(pickle.dumps(obj))
+    """Pickles a dictionary, encodes the output in a base64 string and returns the result."""
+    return base64.b64encode(pickle.dumps(obj)).decode("utf8")
 
 
 def b64_to_dict(b64: str) -> dict[Any, Any]:
     """Decodes a base64 string, and unpickles it back to the original dictionary."""
-    return pickle.loads(base64.b64decode(b64))
+    return pickle.loads(base64.b64decode(bytes(b64, encoding="utf8")))
 
 
 def load_ndarray(file: Path) -> ndarr_1d_uint8:

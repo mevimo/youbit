@@ -22,6 +22,7 @@ cython = "*"
 reedsolo = "*"
 pylint = "*"
 mypy = "*"
+typer = "*"
 
 [dev-packages]
 ipykernel = "*"
@@ -29,3 +30,6 @@ flake8 = "*"
 
 [requires]
 python_version = "3.9"
+
+[packages.rich]
+extras = [ "all",]

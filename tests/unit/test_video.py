@@ -7,6 +7,7 @@ from youbit import util
 from pathlib import Path
 import numpy as np
 import os
+import warnings
 
 
 C_TEST_VIDEO_ENCODE_MD5_SOLUTION = "0dd13976862d4c1a5a5109c2825b8463"
@@ -28,9 +29,9 @@ def test_video_decoder(tempdir, test_arr):
     input = tempdir / 'input.mp4'
     with VideoEncoder(input, overwrite=True) as encoder:
         encoder.feed(test_arr)
-    with VideoDecoder(input) as decoder:
-        pass
-    output = list(VideoDecoder(input))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        output = list(VideoDecoder(input))
     output = np.concatenate(output, dtype=np.uint8)
 
     solution = Path(os.getcwd()) / 'testdata' / 'solutions' / 'test_video_decode_solution.npy'
