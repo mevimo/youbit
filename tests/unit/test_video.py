@@ -24,7 +24,7 @@ def test_video_encoder(tempdir, test_arr):
     assert len(tempdir_files) == 1
     output = tempdir_files[0]
     assert output.name == desired_filename
-    assert util.get_md5(output) == C_TEST_VIDEO_ENCODE_MD5_SOLUTION # Compare MD5 checksum to md5 checksum of pre-computed and verified file. 
+    assert util.get_md5(output) == C_TEST_VIDEO_ENCODE_MD5_SOLUTION # Compare MD5 checksum to md5 checksum of pre-computed and verified file.
 
 
 def test_video_decoder(tempdir, test_arr):

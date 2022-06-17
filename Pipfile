@@ -4,29 +4,24 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pytube = "*"
-pyaescrypt = "*"
 opencv-python = "*"
-par2deep = "*"
 selenium = "*"
 webdriver-manager = "*"
-pytest = "*"
 yt-dlp = "*"
 chromedriver-autoinstaller = "*"
 browser-cookie3 = "*"
-ffmpeg-python = "*"
-imageio = "*"
 av = "*"
 numba = "*"
 cython = "*"
-reedsolo = "*"
-pylint = "*"
-mypy = "*"
 typer = "*"
+numpy = "*"
 
 [dev-packages]
 ipykernel = "*"
 flake8 = "*"
+pylint = "*"
+mypy = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.9"

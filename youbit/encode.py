@@ -1,8 +1,4 @@
-from pathlib import Path
-from typing import Any, Literal
-
 import numpy as np
-import numpy.typing as npt
 from numba import njit, prange
 
 from youbit.types import ndarr_1d_uint8, ndarr_any
@@ -56,14 +52,14 @@ def transform_array(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
     into a uint8 numpy array representing 8 bit greyscale pixels. Returns a new array.
     The output depends on the 'bpp' (or 'bits per pixel') parameter.
 
-    A 'bpp' of 1 for example, dictates each pixel should hold the information of 
+    A 'bpp' of 1 for example, dictates each pixel should hold the information of
     a single bit. A bit has 2 possible states, 1 and 0, so our corresponding pixel
     should too. The pixel will be either 0 or 255 (black and white) to represent
     0 and 1 respectively.
 
     A 'bpp' of 3 thus means 3 bits of information in every pixel.
     Since 3 bits have 8 possible combinations (000,001,010,011,100,101,110,111),
-    our pixel will need 8 distinct states as well (0,48,80,112,144,176,208,255) 
+    our pixel will need 8 distinct states as well (0,48,80,112,144,176,208,255)
     to represent the 3 bits.
 
     It does this by first unpacking the array into a binary representation of it

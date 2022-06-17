@@ -5,14 +5,9 @@ from pathlib import Path
 import os
 import time
 
+from tests.conftest import uploads
 from youbit import Encoder, Decoder
-<<<<<<< HEAD
 from youbit.download import StillProcessingError
-from tests.conftest import uploads
-=======
-from tests.conftest import uploads
-from youbit.download import StillProcessingError
->>>>>>> main
 
 
 @uploads

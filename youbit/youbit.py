@@ -6,7 +6,6 @@ import signal
 import shutil
 import tempfile
 import os
-# import pyAesCrypt
 import gzip
 from zipfile import ZipFile
 
@@ -65,9 +64,7 @@ class Encoder(TempdirMixin):
             raise ValueError(
                 "File too large. Only files up to 1GB are currently supported."
             )  #! raise or remove limit once chunking is in place
-        self.metadata: dict[str, Any] = {
-            "original_MD5": util.get_md5(self.input)
-        }
+        self.metadata: dict[str, Any] = {"original_MD5": util.get_md5(self.input)}
         TempdirMixin.__init__(self)
 
     def encode(
@@ -115,7 +112,7 @@ class Encoder(TempdirMixin):
             path = Path(path)
             output = path / path.name
         else:
-            output = self.tempdir / 'encoded.mp4'
+            output = self.tempdir / "encoded.mp4"
         video_encoder = VideoEncoder(  # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
             output=output,
             res=res,
@@ -138,9 +135,12 @@ class Encoder(TempdirMixin):
         try:
             if path:
                 os.mkdir(path)
-                readme_file = Path(os.path.dirname(__file__)) / 'data' / 'README_upload.txt'
-                shutil.copy(readme_file, (path / 'README.txt'))
-                with open((path / 'metadata.txt'), 'w') as f:
+                readme_file = (
+                    Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
+                )
+                shutil.copy(readme_file, (path / "README.txt"))
+                metadata_path = path / "metadata.txt"
+                with open(metadata_path, "w") as f:
                     f.write(util.dict_to_b64(self.metadata))
             with video_encoder as video:
                 video.feed(arr)
@@ -152,7 +152,6 @@ class Encoder(TempdirMixin):
             raise e
         if path:
             self.close()
-
 
     def upload(self, browser: str, title: str, headless=True) -> str:
         """Uploads the encoded file to YouTube. This process is automated
@@ -183,7 +182,7 @@ class Encoder(TempdirMixin):
         """
         uploader = Uploader(browser=browser, headless=headless)
         description = util.dict_to_b64(self.metadata)
-        video = self.tempdir / 'encoded.mp4'
+        video = self.tempdir / "encoded.mp4"
         url = uploader.upload(filepath=video, title=title, desc=description)
         self.close()
         return url
@@ -207,28 +206,58 @@ class Decoder(TempdirMixin):
         TempdirMixin.__init__(self)
         self.new_md5: Optional[str] = None
 
-    def download(self, path: Union[str, Path] = None) -> None:  #TODO add an option to download video to local?
-        if self.input_type != 'url':
-            raise ValueError('You must initialize this object with a URL if you want to download anything.')
+    def download(
+        self, path: Union[str, Path] = None
+    ) -> None:  # TODO add an option to download video to local?
+        if self.input_type != "url":
+            raise ValueError(
+                "You must initialize this object with a URL if you want to download anything."
+            )
         if path:
             path = self.downloader.download(self.tempdir, Path(path))
         else:
             path = self.downloader.download(self.tempdir, self.tempdir)
             self.downloaded = path
 
-    def decode(self, output: Union[str, Path], ecc: Optional[int] = None, bpp: Optional[int] = None, overwrite: bool = False) -> Path:
+    def decode(
+        self,
+        output: Union[str, Path],
+        ecc: Optional[int] = None,
+        bpp: Optional[int] = None,
+        overwrite: bool = False,
+    ) -> Path:
+        """Decodes a video into the (hopefully intact) original file.
+
+        :param output: Path to save file to.
+        :type output: str or Path
+        :param ecc: Only required when video was downloaded manually.
+            The amount of ECC symbols that were used during the encoding process.
+            0 if no error correction was used. Defaults to None
+        :type ecc: Optional[int], optional
+        :param bpp: _description_, defaults to None
+        :type bpp: Optional[int], optional
+        :param overwrite: _description_, defaults to False
+        :type overwrite: bool, optional
+        :raises ValueError: _description_
+        :raises ValueError: _description_
+        :raises ValueError: _description_
+        :return: _description_
+        :rtype: Path
+        """
         if self.input_type == "url":
             if not self.downloaded:
-                raise ValueError('No downloaded video found.')  ## todo should not be valueerrror
+                raise ValueError(
+                    "No downloaded video found."
+                )  ## todo should not be valueerrror
             file = self.downloaded
-            ecc = self.metadata['ecc_symbols']
-            bpp = self.metadata['bpp']
+            ecc = self.metadata["ecc_symbols"]
+            bpp = self.metadata["bpp"]
         elif self.input_type == "path":
             file = self.input  # type: ignore
             if bpp is None:
-                raise ValueError('Missing argument: bpp')
+                raise ValueError("Missing argument: bpp")
             if ecc is None:
-                raise ValueError('Missing argument: ecc')
+                raise ValueError("Missing argument: ecc")
         frames = []
         for frame in VideoDecoder(vid=file):
             frame = decode.read_pixels(frame, bpp)
@@ -236,7 +265,7 @@ class Decoder(TempdirMixin):
         output_arr = np.concatenate(frames, dtype=np.uint8)
         if ecc > 0:
             output_bytes = ecc_decode(output_arr.tobytes(), ecc)
-            with open(str(output), 'wb') as f:
+            with open(str(output), "wb") as f:
                 f.write(output_bytes)
         else:
             output_arr.tofile(str(output))
@@ -252,5 +281,5 @@ class Decoder(TempdirMixin):
         :return: Are the checksums equal?
         :rtype: bool
         """
-        equal: bool = self.metadata['original_MD5'] == self.new_md5
+        equal: bool = self.metadata["original_MD5"] == self.new_md5
         return equal
