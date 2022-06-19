@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://i.imgur.com/ELoB1Lm.png" alt="YouBit visual">
+    <img src="https://i.imgur.com/DhJ9TZY.png" alt="YouBit visual">
     </br>
 </p>
 
@@ -19,3 +19,11 @@ sdfsdfsdfsdf
 same bitrate to a video like this, but since it is simply longer, more total
 bandwith is available. Since a completely black frame is extremely easy to compress,
 this in effect gives us a higher bitrate for the frames that actually hold data.///
+
+
+
+
+<p align="center">
+    <img src="https://i.imgur.com/ELoB1Lm.png" alt="YouBit visual">
+    </br>
+</p>
