@@ -30,7 +30,7 @@ Because [chroma subsampling](https://en.wikipedia.org/wiki/Chroma_subsampling) w
 It stands for 'Bits Per Pixel' and, as you might have guessed, dictates how many bits of information are saved in a single pixel of video. A higher bpp allows for a higher information density - a smaller output video in comparison to the original file.
 However, it also introduces more corrupt pixels:
 A bpp of 1 means each pixel only has 2 states, 1 and 0, on and off, white and black. This means our greyscale pixels have a value of either 255 (white) or 0 (black). During decoding, YouBit treats anything 128 or more as a 1, and everything below 128 as a 0. This means YouTube's compression needs to change a pixel's value by at least 127 for it to become corrupt.
-Now consider a bpp of 2. Two pixels have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0, 85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel.
+Now consider a bpp of 2. Two bits have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0, 85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel.
 
 ## Why a framerate of 1?
 I do not know exactly how YouTube decides on the bitrate to allocate to a stream, but it seems to rougly follow their [recommended video bitrates](https://support.google.com/youtube/answer/1722171?hl=en#zippy=%2Cbitrate). All else equal, a video with a framerate of 1 will get the same bitrate as a video with a framerate of 30. See where I'm going with this? More effective bandwith per frame, less compression.
