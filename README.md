@@ -41,7 +41,7 @@ Now consider a bpp of 2. Two bits have 4 possible states (00,01,10,11). So to re
 
 ## Why a framerate of 1?
 I do not know exactly how YouTube decides on the bitrate to allocate to a stream, but it seems to rougly follow their [recommended video bitrates](https://support.google.com/youtube/answer/1722171?hl=en#zippy=%2Cbitrate). All else equal, a video with a framerate of 1 will get the same bitrate as a video with a framerate of 30. See where I'm going with this? More effective bandwith per frame, less compression.
-(I've tried injecting all-black frames between actual frames
+(I've tried injecting all-black frames between actual frames **finish pls ty**
 
 ## Why not use the YouTube API for uploads?
 There are 2 reasons. For one, unverified API projects can only upload private video's. These videos are locked to being private and this cannot be changed. This means YouBit links would not be able to be shared between users. (And no, getting this project verified by Google is not an option for obvious reasons).
