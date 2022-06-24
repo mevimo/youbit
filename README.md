@@ -78,13 +78,13 @@ Thus, it is recommended to wait a sufficient amount of time. The highest availab
 ```
 py -m youbit test vbr https://www.youtube.com/watch?v=SLP9mbCuhJc
 ```
-A normal 1080p YouBit video will settle around 10233, a YouBit video with the 'zero frame' option enabled will settle around 7000.
+A normal 1080p YouBit video will settle around 10233. The CLI function will tell you if the video is ready.
 
 ## How large can my file be?
 YouBit encodes your files in chunks, so we are not limited by memory, but we are limited by YouTube's maximum video length.
 YouTube video's are allowed to be up to 12 hours long, or 128GB, whichever comes first.
 YouBit will raise exceptions during the encoding process if either of these are violated.
-(*If the account you are using is not verified, the limit is 15 minutes instead. Be sure to verify your account.*)
+(*If the YouTube account you are using is not verified, the limit is 15 minutes instead. Be sure to verify your account.*)
 
 Ofcourse, this depends entirely on the settings selected.
 To give you an idea, the default settings will stop working with files larger than **9GB**.
@@ -92,6 +92,7 @@ To give you an idea, the default settings will stop working with files larger th
 
 ## What is a 'zero frame'?
 YouBit has the option to use 'zeroframes'. If enabled, YouBit will interject completely black frames in between real frames when generating the video.
-The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: video's with zero frames have a lower bitrate, but not half. They seem to get a bitrate of 7000, compared to the usual 10200 (1080p, 6fps).
+The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: video's with zero frames have a lower bitrate, but not half. 1080p video's seem to get a bitrate of 7000, compared to the usual 10200.
 
-This is still a useful ~40% effective inrease in available bandwidth, leading to less errors and a potentially higher information density.
+This is still a useful ~40% effective inrease in effective available bandwidth, leading to less errors and a potentially higher information density.
+On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
