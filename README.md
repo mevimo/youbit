@@ -30,6 +30,7 @@ sdfsdfsdfsdf
 - [Why not you use the YouTube API for uploads?](#why-not-use-the-youtube-api-for-uploads)
 - [After uploading, how long do I have to wait to download A YouBit video again?](#after-uploading-how-long-do-i-have-to-wait-to-download-a-youbit-video-again)
 - [How large can my file be?](#how-large-can-my-file-be)
+- [What options should I use?](#what-options-should-i-use)
 
 
 ## Does this mean infinite, free cloud storage?!
@@ -78,7 +79,14 @@ Thus, it is recommended to wait a sufficient amount of time. The highest availab
 ```
 py -m youbit test vbr https://www.youtube.com/watch?v=SLP9mbCuhJc
 ```
-A normal 1080p YouBit video will settle around 10233. The CLI function will tell you if the video is ready.
+| Resolution | VBR settles around |
+| ---------- | ------------------ |
+| 1920x1080  | 10200              |
+| 2560x1440  | 19700              |
+| 3890x2160  | 47800              |
+| 7680x4320  | 172407             |
+> There's no real advantage to using higher resolutions than the default of 1080p.
+
 
 ## How large can my file be?
 YouBit encodes your files in chunks, so we are not limited by memory, but we are limited by YouTube's maximum video length.
@@ -95,4 +103,8 @@ YouBit has the option to use 'zeroframes'. If enabled, YouBit will interject com
 The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: video's with zero frames have a lower bitrate, but not half. 1080p video's seem to get a bitrate of 7000, compared to the usual 10200.
 
 This is still a useful ~40% effective inrease in effective available bandwidth, leading to less errors and a potentially higher information density.
-On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
+> On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
+
+
+## What options should I use?
+The default ones.
