@@ -1,7 +1,8 @@
 import os
 from contextlib import redirect_stderr
-from typing import Union, Any, Optional
+from typing import Union, Any, Optional, Tuple
 from pathlib import Path
+import warnings
 
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
@@ -23,41 +24,72 @@ class StillProcessingError(Exception):
         super().__init__(msg, *args, **kwargs)
 
 
-class VideoUnavailableError(Exception):
-    """This exception is raised when YouBit could not download a video because it is not available (anymore).
-    It is still a valid YouTube URL."""
-    def __init__(self, *args, msg='Video is not available (anymore)', **kwargs):  # pylint: disable=useless-super-delegation
-        super().__init__(msg, *args, **kwargs)
-
-
 class Downloader:
     """Can downloads YouTube video's, automatically grabs the optimal format for YouBit.
     Also exposes the `get_metadata` property which returns the YouBit-specific metadata,
     extracted from the video description.
+    self.formats... self.info....
     """
 
     def __init__(self, url: str) -> None:
-        """Checks the passed URL and gets metadata.
-        Can take a moment."""
+        """Checks the passed URL and gets metadata."""
         self.url = url
         self.opts: dict[str, Any] = {
             "logtostderr": True,
             'restrictfilenames': True,
             'windowsfilenames': True
         }
-        with open(os.devnull, "wb") as devnull, redirect_stderr(devnull), YoutubeDL(self.opts) as ydl:  # yt-dlp will print 1ll raised exceptions to stderr, effectively writing dublicate information to terminal. There are no flags that alter this behavior.
-            try:
-                self._stream_info = ydl.extract_info(url, download=False)
-            except DownloadError as e:
-                if 'video unavailable' in str(e).lower():
-                    raise VideoUnavailableError from e
-                else:
-                    raise e
+        self.refresh()
         try:
-            self._yb_metadata = util.b64_to_dict(self._stream_info["description"])
+            self._yb_metadata = util.b64_to_dict(self.info["description"])
         except Exception as e:
             raise InvalidYTDescription from e
-        self.opts["format"] = self._format_selector
+
+    def refresh(self) -> None:
+        """Extract video information, refreshing all video metadata in the object."""
+        with open(os.devnull, "wb") as devnull, redirect_stderr(devnull):  # yt-dlp will manually write raised exceptions to stderr, effectively writing duplicate information to terminal. There are no flags that alter this behavior.
+            with YoutubeDL(self.opts) as ydl:
+                self.info = ydl.extract_info(self.url, download=False)
+        self.formats = self.info['formats']
+
+    @property
+    def best_vbr(self) -> int:
+        """Returns the video bitrate of the format with the highest one currently available.
+        Use self.refresh() to refresh this information as this might change as long as
+        YouTube is processing the video (which goes on for much, much longer than
+        the 'processing' popup remains visible).
+        """
+        desired_resolution = "{}x{}".format(
+            self._yb_metadata['resolution'][0],
+            self._yb_metadata['resolution'][1]
+        )
+        formats = [
+            f for f in self.formats if f["resolution"] == desired_resolution
+        ]
+        formats.sort(reverse=True, key=lambda f: f.get("vbr"))
+        if len(formats) == 0:
+            return 0
+        return formats[0]['vbr']
+
+    def get_best_format(self) -> Tuple[int, list]:
+        """Returns the video bitrate of the (usable) format with the highest one, 
+        as well as a list of all currently available formats.
+        Can be useful to check if a format with a sufficiently high video bitrate
+        is available yet.
+        Often times, a video will have finished processing in a certain resolution,
+        but only in a format with significantly less video bitrate than might be
+        available a little later.
+        """
+        self.__init__(self.url)
+        desired_resolution = "{}x{}".format(
+            self._yb_metadata['resolution'][0],
+            self._yb_metadata['resolution'][1]
+        )
+        formats = [
+            f for f in self.formats if f["resolution"] == desired_resolution
+        ]
+        formats.sort(reverse=True, key=lambda f: f.get("vbr"))
+        return (formats[0]['vbr'], self.formats)
 
     def _format_selector(self, ctx: dict[Any, Any]) -> dict[Any, Any]:
         """Custom format selector for yt_dlp.
@@ -69,11 +101,13 @@ class Downloader:
         :return: The selected format(s), for yt_dlp.
         :rtype: Iterator[dict]
         """
-
         formats: Optional[dict[Any, Any]] = ctx.get("formats")
         if not formats:
             raise RuntimeError('No formats found for download.')
-        desired_resolution = self._yb_metadata['resolution']
+        desired_resolution = "{}x{}".format(
+            self._yb_metadata['resolution'][0],
+            self._yb_metadata['resolution'][1]
+        )
         usable_formats = [
             f for f in formats if f["resolution"] == desired_resolution
         ]
@@ -81,9 +115,16 @@ class Downloader:
             raise StillProcessingError
         usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
         best = usable_formats[0]
+        if best['vbr'] < 6000:
+            warnings.warn(
+                f"A very low video bitrate (vbr) of {best['vbr']} was detected. "
+                "The video is most likely not done processing, which might take "
+                "a very long time to finish. There is a high chance the decoding "
+                "process will fail because of this."
+            )
         yield best
 
-    def download(self, output: Union[str, Path], temp: Optional[Union[str, Path]] = None) -> Path:
+    def download(self, output: Union[str, Path], temp: Optional[Union[str, Path]] = None) -> Path: ##TODO raises downloaderror, should be documented
         """Downloads the video in question.
 
         :param temp: The path where the file are saved during download.
@@ -96,9 +137,19 @@ class Downloader:
         }
         if temp:
             self.opts['paths']['temp'] = str(temp)
-        with open(os.devnull, "wb") as devnull, redirect_stderr(devnull), YoutubeDL(self.opts) as ydl:
-            ydl.download([self.url])
-        file = [f for f in Path(output).iterdir() if f.is_file() and f.suffix in ('.mp4', '.mkv')][0]  # Assumes there to be no other .mp4 or .mkv files in the given output directory # and f.suffix in ('.mp4', '.mkv')
+
+        self.opts["format"] = self._format_selector
+        try:
+            with open(os.devnull, "wb") as devnull, redirect_stderr(devnull):
+                with YoutubeDL(self.opts) as ydl:
+                    ydl.download([self.url])
+        except DownloadError as e:
+            if 'processing' in str(e).lower():
+                raise StillProcessingError from e
+            else:
+                raise e
+        del self.opts["format"]  # So we can still use the .best_vbr property, since ytdlp willa lso use the custom format selector
+        file = [f for f in Path(output).iterdir() if f.is_file() and f.suffix in ('.mp4', '.mkv')][0]  ##TODO this is bad 
         return file
 
     def get_metadata(self) -> dict[Any, Any]:
