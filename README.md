@@ -75,16 +75,19 @@ If the video is unavailable because it is still processing (this means not even 
 If the video is technically available, but the resolution that was specified during the encoding process is not yet available, YouBit will throw an exception.
 If neither of the above, YouBit *will* download the video and *attempt* to decode it.
 
-Thus, it is recommended to wait a sufficient amount of time. The highest available video bitrate of any uploaded YouBit video can be checked most easily using the CLI:
+Thus, it is recommended to wait a sufficient amount of time. The highest available video bitrate (VBR) of any uploaded YouBit video can be checked most easily using the CLI:
 ```
 py -m youbit test vbr https://www.youtube.com/watch?v=SLP9mbCuhJc
 ```
-| Resolution | VBR settles around |
+| Resolution (no zero-frame) | VBR settles around |
 | ---------- | ------------------ |
 | 1920x1080  | 10200              |
 | 2560x1440  | 19700              |
 | 3890x2160  | 47800              |
 | 7680x4320  | 172407             |
+
+The decoding process might very well still work with a lower VBR, it all depends on the settings that were used.
+
 > There's no real advantage to using higher resolutions than the default of 1080p.
 
 
