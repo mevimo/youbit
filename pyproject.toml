@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "youbit"
+version = "0.1.0"
+description = "Host any file on YouTube, for free."
+readme= "README.md"
+authors = ["Florian Laporte <florianl@florianl.dev>"]
+license = "MIT"
+repository = "https://github.com/MeViMo/youbit"
+build = "build.py"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+av = "^9.2.0"
+yt-dlp = "^2022.5.18"
+typer = "^0.4.1"
+webdriver-manager = "^3.7.0"
+selenium = "^4.2.0"
+browser-cookie3 = "^0.15.0"
+rich = "^12.4.4"
+numba = "^0.55.2"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+pytest = "^7.1.2"
+Cython = "^0.29.30"
+setuptools = "^62.6.0"
+
+[tool.poetry.scripts]
+youbit = 'youbit:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "wheel", "Cython>=0.29.30", "setuptools"]
+build-backend = "poetry.core.masonry.api"

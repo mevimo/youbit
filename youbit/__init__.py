@@ -6,17 +6,23 @@ __version__ = "0.1.0"
 __author__ = "Florian Laporte"
 __license__ = "MIT License"
 
-from youbit.youbit import Encoder, Decoder
-import youbit.encode as _encode
-import youbit.decode as _decode
-import youbit.util as _util
-import youbit.video as _video
-import youbit.ecc.ecc as _ecc
-__all__ = ['Encoder', 'Decoder', '_encode', '_decode', '_video', '_util', '_ecc']
+from .yb import Encoder, Decoder
+from . import encode
+from . import decode
+from . import util
+from . import video
+from . import upload
+from . import download 
+from .ecc import ecc
 
-
-
-
-# import sys
-# assert sys.version_info >= (2, 5)
-##NOTE enforce minimum python version
+__all__ = [
+    'Encoder',
+    'Decoder',
+    'encode',
+    'decode',
+    'download',
+    'upload',
+    'video',
+    'util',
+    'ecc'
+]

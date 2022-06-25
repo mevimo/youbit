@@ -3,6 +3,7 @@ This file (test_decode.py) contains unit tests for the decode.py file.
 """
 from pathlib import Path
 import os
+import time
 
 import numpy as np
 

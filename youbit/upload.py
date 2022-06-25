@@ -1,6 +1,7 @@
 import time
 from typing import Any, Union
 from pathlib import Path
+import logging
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -12,6 +13,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.expected_conditions import element_to_be_clickable
 import browser_cookie3
+
+
+C_XPATH_UPLOAD_STATUS = '/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span'
 
 
 class Uploader:
@@ -40,6 +44,7 @@ class Uploader:
             options.add_argument("--headless")
             options.add_argument(
                 "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+        logging.getLogger('WDM').setLevel(logging.NOTSET)  # Turns off the webdriver_manager logging
         service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=service, options=options)
 
@@ -76,7 +81,7 @@ class Uploader:
             }
         )
 
-    def upload(self, filepath: Union[str, Path], title: str, desc: str) -> str:
+    def upload(self, filepath: Union[str, Path], desc: str, title: str = str(time.time())) -> str:
         self.browser.get("https://studio.youtube.com/")
         time.sleep(1)
         self.browser.find_element(By.ID, 'upload-icon').click()
@@ -114,9 +119,9 @@ class Uploader:
             ).text
         video_url = WebDriverWait(self.browser, timeout=20).until(url_not_empty)
 
-        status = self.browser.find_element(By.TAG_NAME, 'ytcp-video-upload-progress').find_element(By.CSS_SELECTOR, '.progress-label')
+        status = self.browser.find_element(By.XPATH, C_XPATH_UPLOAD_STATUS)
         while 'Uploading' in status.text:
-            print(status.text) ##TODO callback here
+            print(status.text)
             time.sleep(0.5)
 
         done_btn = self.browser.find_element(By.ID, "done-button")

@@ -10,7 +10,7 @@ from tests.conftest import uploads
 
 
 @uploads
-def test_upload(cmd_browser):
+def test_upload(cmd_browser: str) -> None:
     """WHEN we use a youbit.uploader.Uploader object to upload a video.
     THEN verify if returned URL is valid, and title and description were set
     appropriately.

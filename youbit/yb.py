@@ -1,21 +1,23 @@
 from __future__ import annotations
-from typing import Optional, Any, Union
+from typing import Optional, Any, Union, Tuple
 from pathlib import Path
 import atexit
 import signal
 import shutil
 import tempfile
 import os
+import time
 import gzip
-from zipfile import ZipFile
 
 import numpy as np
 
-from youbit import encode, decode, util
-from youbit.ecc.ecc import ecc_encode, ecc_decode
-from youbit.video import VideoDecoder, VideoEncoder
-from youbit.download import Downloader
-from youbit.upload import Uploader
+import youbit.encode
+import youbit.decode
+import youbit.util
+import youbit.ecc.ecc as youbit_ecc
+import youbit.video
+import youbit.download
+import youbit.upload
 
 
 class TempdirMixin:
@@ -60,23 +62,22 @@ class Encoder(TempdirMixin):
             )
         if not self.input.is_file():
             raise ValueError("You must provide a file.")
-        if os.path.getsize(self.input) > 1000000000:
-            raise ValueError(
-                "File too large. Only files up to 1GB are currently supported."
-            )  #! raise or remove limit once chunking is in place
-        self.metadata: dict[str, Any] = {"original_MD5": util.get_md5(self.input)}
+        self.metadata: dict[str, Any] = {
+            "original_MD5": youbit.util.get_md5(self.input),
+            "file_extension": self.input.suffix,
+        }
         TempdirMixin.__init__(self)
 
     def encode(
         self,
         path: Optional[Union[str, Path]] = None,
-        overwrite: bool = False,
         ecc: Optional[int] = 32,
-        res: tuple[int, int] = (1920, 1080),
+        res: Union[Tuple[int, int], str] = (1920, 1080),
         bpp: int = 1,
         crf: int = 18,
+        zero_frame: bool = False,
+        overwrite: bool = False,
     ) -> None:
-        #! if we want to zip and encrypt, we need to do it in-memory really...
         """Encodes a file into a YouBit video.
 
         :param path: Use this parameter if you want to upload the
@@ -90,13 +91,15 @@ class Encoder(TempdirMixin):
         :param ecc: How many ecc symbols to use for the reed-solomon encoding.
             Set to 0 to skip ecc encoding.
         :type ecc: int, optional
-        :param res: Target resolution (width, height) of video. Sum of pixels
-            (width * height) must be divisible by 8. Defaults to (1920, 1080)
+        :param res: Target resolution (width, height) of video. Supported resolutions
+            are: (1920, 1080), (2560, 1440), (3840, 2160), (7680, 4320).
+            Can also be a string, 'hd', '2k', '4k' or '8k.
+            Defaults to (1920, 1080)
         :type res: tuple, optional
         :param bpp: Target 'bpp' of 'bits per pixel'. How many bits of
             information should be saved per pixel of video. Defaults to 2
         :type bpp: int, optional
-        :param framerate: XXXXXXXXXXXXXXXXXXX, defaults to 1
+        :param framerate: The framerate to use for the video, defaults to 1
         :type framrate: int, optional
         :param crf: the crf value to pass to the h.264 encoder, defaults to 18
         :type crf: int, optional
@@ -108,52 +111,94 @@ class Encoder(TempdirMixin):
         :raises FileExistsError: If argument path points to an already
             existing file.
         """
+        self.metadata["bpp"] = bpp
+        if isinstance(res, tuple):
+            if res not in ((1920, 1080), (2560, 1440), (3840, 2160), (7680, 4320)):
+                raise ValueError(
+                    "Invalid resolution. Supported resolutions are: "
+                    "(1920, 1080), (2560, 1440), (3840, 2160), (7680, 4320)"
+                )
+            self.metadata["resolution"] = res
+        else:
+            if res.lower() == "hd":
+                self.metadata["resolution"] = (1920, 1080)
+            elif res.lower() == "2k":
+                self.metadata["resolution"] = (2560, 1440)
+            elif res.lower() == "4k":
+                self.metadata["resolution"] = (3840, 2160)
+            elif res.lower() == "8k":
+                self.metadata["resolution"] = (7680, 4320)
+            else:
+                raise ValueError(
+                    f"Invalid resolution argument '{res}'. Must be a tuple or one of 'hd', '2k', '4k' or '8k'."
+                )
+        self.metadata["zero_frame"] = zero_frame
+        self.metadata["ecc_symbols"] = ecc
         if path:
             path = Path(path)
-            output = path / path.name
+            if path.exists() and overwrite:
+                shutil.rmtree(path)
+            os.mkdir(path)
+            readme_file = Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
+            shutil.copy(readme_file, (path / "README.txt"))
+            metadata_path = path / "metadata.txt"
+            with open(metadata_path, "w") as f:
+                f.write(youbit.util.dict_to_b64(self.metadata))
+            if path.suffix not in (".mkv", ".mp4"):
+                self.output = path / (path.name + ".mp4")
+            else:
+                self.output = path / path.name
         else:
-            output = self.tempdir / "encoded.mp4"
-        video_encoder = VideoEncoder(  # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
-            output=output,
-            res=res,
+            self.output = self.tempdir / "encoded.mp4"
+
+        video_encoder = youbit.video.VideoEncoder(  # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
+            output=self.output,
+            res=self.metadata["resolution"],
             crf=crf,
+            zero_frame=zero_frame,
             overwrite=overwrite if path else True,
         )
 
-        if ecc:
-            data = util.load_bytes(self.input)
-            data = ecc_encode(data, ecc)
-            arr = np.frombuffer(data, dtype=np.uint8)
-            self.metadata["ecc_symbols"] = ecc
-        else:
-            arr = util.load_ndarray(self.input)
-        arr = encode.add_lastframe_padding(arr, res, bpp)
-        arr = encode.transform_array(arr, bpp)
+        zipped_path = self.tempdir / "bin.gz"
+        with open(self.input, "rb") as f_in, gzip.open(zipped_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
-        self.metadata["bpp"] = bpp
-        self.metadata["resolution"] = f"{res[0]}x{res[1]}"
-        try:
-            if path:
-                os.mkdir(path)
-                readme_file = (
-                    Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
-                )
-                shutil.copy(readme_file, (path / "README.txt"))
-                metadata_path = path / "metadata.txt"
-                with open(metadata_path, "w") as f:
-                    f.write(util.dict_to_b64(self.metadata))
-            with video_encoder as video:
-                video.feed(arr)
-        except Exception as e:
-            try:
-                shutil.rmtree(path)
-            except FileNotFoundError:
-                pass
-            raise e
-        if path:
-            self.close()
+        # Calculate approximate video length, check if too long
+        filesize = os.path.getsize(zipped_path)
+        with_ecc_overhead = filesize * (255 / (255 - ecc))
+        pixel_count = (with_ecc_overhead * 8) / bpp
+        frame_count = pixel_count / (
+            self.metadata["resolution"][0] * self.metadata["resolution"][1]
+        )
+        if zero_frame:
+            frame_count = frame_count * 2
+        if (
+            frame_count > 43000
+        ):  # the max video duration on YouTube is 12 hours or 43200 seconds
+            raise RuntimeError(
+                "File is too large. The given file with the given settings would produce "
+                f"a video that is {frame_count} seconds long. The maximum is 43,000."
+            )
 
-    def upload(self, browser: str, title: str, headless=True) -> str:
+        chunk_size = (255 - ecc) * 100000
+        with open(zipped_path, "rb") as f:
+            while True:
+                data = f.read(chunk_size)
+                if not data:
+                    break
+                if ecc:
+                    data = youbit_ecc.ecc_encode(data, ecc)
+                data = np.frombuffer(data, dtype=np.uint8)
+                data = youbit.encode.transform_array(data, bpp)
+                video_encoder.feed(data)
+        video_encoder.close()
+
+        if os.path.getsize(self.output) > 137000000000:
+            raise RuntimeError("File is too large. The encoded video exceeds 128GB.")
+
+    def upload(
+        self, browser: str, title: str = str(time.time()), headless: bool = True
+    ) -> str:
         """Uploads the encoded file to YouTube. This process is automated
         with a Selenium webdriver, because of the various limitations on
         the YouTube API. This means this method needs a 'donor' browser
@@ -169,7 +214,7 @@ class Encoder(TempdirMixin):
         not choose your channel name for you.
 
         :param browser: Which browser to extract cookies from. Can be
-            'chrome', 'firefox', 'edge', 'opera', 'brave' or 'chromium'. #! should be enum
+            'chrome', 'firefox', 'edge', 'opera', 'brave' or 'chromium'.
         :type browser: str
         :param title: The title for the video
         :type title: str
@@ -180,8 +225,8 @@ class Encoder(TempdirMixin):
         :return: Returns the URL of the uploaded video
         :rtype: str
         """
-        uploader = Uploader(browser=browser, headless=headless)
-        description = util.dict_to_b64(self.metadata)
+        uploader = youbit.upload.Uploader(browser=browser, headless=headless)
+        description = youbit.util.dict_to_b64(self.metadata)
         video = self.tempdir / "encoded.mp4"
         url = uploader.upload(filepath=video, title=title, desc=description)
         self.close()
@@ -190,10 +235,10 @@ class Encoder(TempdirMixin):
 
 class Decoder(TempdirMixin):
     def __init__(self, input: Union[str, Path]):
-        if isinstance(input, str) and util.is_url(input):
+        if isinstance(input, str) and youbit.util.is_url(input):
             self.input: Union[str, Path] = input
             self.input_type = "url"
-            self.downloader = Downloader(self.input)
+            self.downloader = youbit.download.Downloader(self.input)
             self.metadata = self.downloader.get_metadata()
             self.downloaded: Optional[Path] = None
         elif Path(input).exists() and Path(input).is_file():
@@ -224,9 +269,10 @@ class Decoder(TempdirMixin):
         output: Union[str, Path],
         ecc: Optional[int] = None,
         bpp: Optional[int] = None,
+        zero_frame: Optional[bool] = None,
         overwrite: bool = False,
     ) -> Path:
-        """Decodes a video into the (hopefully intact) original file.
+        """Decodes a video back into original file.
 
         :param output: Path to save file to.
         :type output: str or Path
@@ -247,32 +293,59 @@ class Decoder(TempdirMixin):
         if self.input_type == "url":
             if not self.downloaded:
                 raise ValueError(
-                    "No downloaded video found."
+                    "Download the video first."
                 )  ## todo should not be valueerrror
             file = self.downloaded
             ecc = self.metadata["ecc_symbols"]
             bpp = self.metadata["bpp"]
+            zero_frame = self.metadata["zero_frame"]
         elif self.input_type == "path":
             file = self.input  # type: ignore
             if bpp is None:
                 raise ValueError("Missing argument: bpp")
             if ecc is None:
                 raise ValueError("Missing argument: ecc")
-        frames = []
-        for frame in VideoDecoder(vid=file):
-            frame = decode.read_pixels(frame, bpp)
-            frames.append(frame)
-        output_arr = np.concatenate(frames, dtype=np.uint8)
-        if ecc > 0:
-            output_bytes = ecc_decode(output_arr.tobytes(), ecc)
-            with open(str(output), "wb") as f:
-                f.write(output_bytes)
-        else:
-            output_arr.tofile(str(output))
-        # decrypt and or unzip in-memory
-        ##TODO: overwrite logic here maybe use normal writing bytes or smthn
-        self.new_md5 = util.get_md5(output)
+            if zero_frame is None:
+                raise ValueError("Missing argument: zero_frame")
+
+        output = Path(output)
+        if output.suffix != self.metadata["file_extension"]:
+            output = Path(str(output) + self.metadata["file_extension"])
+        if output.exists() and not overwrite:
+            raise FileExistsError(f"File {output} already exists.")
+
+        zipped_path = self.tempdir / "bin.gz"
+        chunk_size = 255 * 1000000
+        with youbit.video.VideoDecoder(vid=file):
+            with open(zipped_path, "wb") as f:
+                while True:
+                    arr = youbit.video.VideoDecoder.get_array(chunk_size)
+                    if not arr.size:
+                        break
+                    arr = youbit.decode.read_pixels(arr, bpp)
+                    if ecc:
+                        arr = youbit_ecc.ecc_decode(arr.tobytes(), ecc)
+                    f.write(arr)
+
+        with open(zipped_path, "rb") as f_in, gzip.open(output, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        self.new_md5 = youbit.util.get_md5(output)
         self.close()
+
+
+        # frames = []
+        # for frame in youbit.video.VideoDecoder(vid=file):
+        #     frame = youbit.decode.read_pixels(frame, bpp)
+        #     frames.append(frame)
+        # output_arr = np.concatenate(frames, dtype=np.uint8)
+        # if ecc > 0:
+        #     output_bytes = youbit_ecc.ecc_decode(output_arr.tobytes(), ecc)
+        #     with open(str(output), "wb") as f:
+        #         f.write(output_bytes)
+        # else:
+        #     output_arr.tofile(str(output))
+        # self.new_md5 = youbit.util.get_md5(output)
+        # self.close()
 
     def verify_checksum(self) -> bool:
         """Compares the MD5 checksum of the original file to

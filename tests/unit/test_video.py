@@ -8,7 +8,6 @@ import warnings
 import numpy as np
 
 from youbit.video import VideoEncoder, VideoDecoder
-from youbit.encode import add_lastframe_padding
 from youbit import util
 
 
