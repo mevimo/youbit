@@ -48,8 +48,8 @@ def _numba_transform_bpp3(arr, out, mapping) -> None:
 
 
 def transform_array(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
-    """Transforms a uint8 numpy array (0, 255, 38, ..) representing individual bytes
-    into a uint8 numpy array representing 8 bit greyscale pixels. Returns a new array.
+    """Transforms a uint8 numpy array (0, 255, 38, ..) into a uint8 numpy array
+    representing 8 bit greyscale pixels in a YouBit video.
     The output depends on the 'bpp' (or 'bits per pixel') parameter.
 
     It does this by first unpacking the array into a binary representation of it
