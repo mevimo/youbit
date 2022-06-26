@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import gzip
 import youbit.ecc
+import shutil
 
 fileone = 'E:/test3.jpg'
 filetwo = 'E:/oh/test3.jpg'
@@ -11,6 +12,41 @@ filetwo = 'E:/oh/test3.jpg'
 from youbit.video import VideoDecoder
 
 
+for i in VideoDecoder('E:/yb-output.mp4'):
+    pass
+
+print('ok')
+
+# y = youbit.ecc.ecc_encode(x)
+# print(y)
+# z = youbit.ecc.ecc_decode(x, 32)
+# print(len(z))
+
+# x = bytearray([1,2,3,4,5,6,7,8,9,10,11,22,33,44,55,66,77,88,99])  # length of 19 (19+32=51)
+# x.extend([0,0]*102)
+# y = youbit.ecc.ecc_encode(x)
+
+# print(y)
+# print(len(y))
+
+# print(youbit.ecc.ecc_decode(y, 32))
+
+# zeros = bytearray([0,0,0,0,0,0,0,0,0,0]*100)  #1000
+# y.extend(zeros)
+
+# print(len(y))
+
+# print(youbit.ecc.ecc_decode(y, 32))
+
+
+
+# with open('E:/test2.jpg', "rb") as f_in, gzip.open('E:/test2.gz', "wb") as f_out:
+#     shutil.copyfileobj(f_in, f_out)
+
+
+
+# with gzip.open('E:/test2.gz', "rb") as f_in, open('E:/oh/qick/test2.jpg', "wb") as f_out:
+#     shutil.copyfileobj(f_in, f_out)
 
 
 

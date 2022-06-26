@@ -169,6 +169,9 @@ opt_overwrite = typer.Option(
 #     return decoder.downloader.best_vbr, decoder.downloader.best_vbr_url, decoder.downloader.best_vbr_quality
 
 
+# @test_app.command("")
+
+
 @test_app.command("vbr")
 def test_vbr(url: str = typer.Argument(...)):
     """Prints the best available video bitrate for the given YouTube video."""
@@ -191,12 +194,9 @@ def test_vbr(url: str = typer.Argument(...)):
     if good_vbr:
         if vbr > good_vbr:
             color = 'green'
-            console.print(f"[{color}]{vbr}[/]")
-            console.print(f"[{color}]This video is ready![/]")
         else:
             color = 'red'
-            console.print(f"[{color}]{vbr}[/]")
-            console.print(f"[{color}]This video is not yet ready.[/]")
+        console.print(f"[{color}]{vbr}[/]")
     else:
         console.print(f"[yellow]{vbr}[/]")
         console.print("[yellow]This video uses zero frames: may or may not work.[/]")
@@ -210,6 +210,17 @@ def test_metadata(url: str = typer.Argument(...)):
         for k, v in decoder.metadata.items():
             print(k, end=': ')
             pprint(v)
+
+
+@test_app.command("compare")
+def test_compare(file1: Path = typer.Argument(...), file2: Path = typer.Argument(...)):
+    """Will compare binary information of two files, and print out the differences."""
+    from youbit.util import compare_files
+    from rich.pretty import pprint
+    result = compare_files(file1, file2)
+    for k,v in result.items():
+        print(k, end=': ')
+        pprint(v)
 
 
 @encode_app.command("local", no_args_is_help=True)

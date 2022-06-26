@@ -111,7 +111,6 @@ class Encoder(TempdirMixin):
         :raises FileExistsError: If argument path points to an already
             existing file.
         """
-        self.metadata["bpp"] = bpp
         if isinstance(res, tuple):
             if res not in ((1920, 1080), (2560, 1440), (3840, 2160), (7680, 4320)):
                 raise ValueError(
@@ -132,6 +131,7 @@ class Encoder(TempdirMixin):
                 raise ValueError(
                     f"Invalid resolution argument '{res}'. Must be a tuple or one of 'hd', '2k', '4k' or '8k'."
                 )
+        self.metadata["bpp"] = bpp
         self.metadata["zero_frame"] = zero_frame
         self.metadata["ecc_symbols"] = ecc
         if path:
@@ -151,7 +151,7 @@ class Encoder(TempdirMixin):
         else:
             self.output = self.tempdir / "encoded.mp4"
 
-        video_encoder = youbit.video.VideoEncoder(  # This goes first so that errors because of bad arguments can be raised before the actual encoding process, which can take a while.
+        video_encoder = youbit.video.VideoEncoder(  # This goes first so that ValueErrors can be raised before the actual encoding process, which can take a while.
             output=self.output,
             res=self.metadata["resolution"],
             crf=crf,
@@ -181,6 +181,10 @@ class Encoder(TempdirMixin):
             )
 
         chunk_size = (255 - ecc) * 100000
+        # If chunk_size is not a factor of (255-ecc), ecc_encode() will have to
+        # add trailing empty bytes. We only want that at the end of our file,
+        # where trailing null bytes do not matter. If they are added in the middle
+        # of our binary, the file would obviously become corrupt.
         with open(zipped_path, "rb") as f:
             while True:
                 data = f.read(chunk_size)
@@ -315,11 +319,11 @@ class Decoder(TempdirMixin):
             raise FileExistsError(f"File {output} already exists.")
 
         zipped_path = self.tempdir / "bin.gz"
-        chunk_size = 255 * 1000000
-        with youbit.video.VideoDecoder(vid=file):
+        chunk_size = 255 * 1000000  # needs to be a factor of 255 (for ecc_decode) and 8 (for read_pixels)
+        with youbit.video.VideoDecoder(vid=file, zero_frame=zero_frame) as decoder:
             with open(zipped_path, "wb") as f:
                 while True:
-                    arr = youbit.video.VideoDecoder.get_array(chunk_size)
+                    arr = decoder.get_array(chunk_size)
                     if not arr.size:
                         break
                     arr = youbit.decode.read_pixels(arr, bpp)
@@ -327,7 +331,7 @@ class Decoder(TempdirMixin):
                         arr = youbit_ecc.ecc_decode(arr.tobytes(), ecc)
                     f.write(arr)
 
-        with open(zipped_path, "rb") as f_in, gzip.open(output, "wb") as f_out:
+        with gzip.open(zipped_path, "rb") as f_in, open(output, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         self.new_md5 = youbit.util.get_md5(output)
         self.close()

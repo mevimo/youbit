@@ -33,6 +33,8 @@ class Uploader:
         :type browser: str
         :param headless: Hide the browser windows, defaults to True
         :type headless: bool, optional
+        :param suppress: Suppress selenium stdout, defaults to True
+        :type suppress: bool, optional
         :raises ValueError: If the passer 'browser' argument is not recognized.
         """
         options: Any = Options()

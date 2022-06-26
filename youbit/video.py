@@ -10,7 +10,12 @@ from youbit.types import ndarr_1d_uint8
 
 
 class VideoEncoder:
-    """1920x1080"""
+    """Encodes uint8 numpy arrays into a video. Uses the x264 codec.
+    Each uint8 element of the array should represents one pixel.
+    The videos are always greyscale.
+    A context manager should be used to ensure that the video container
+    is closed properly.
+    """
 
     def __init__(
         self,
@@ -108,9 +113,17 @@ class VideoEncoder:
 
 
 class VideoDecoder:
-    """Only extracting keyframes
-    only tested with yt yadda yadda
-    WONT WORK WHEN THE VIDEO HAS NOT YET PASSED THROUGH YOUTUBE
+    """Decodes a YouBit video (that has gone through YouTube) into
+    a uint8 numpy array where each element represents the value of
+    a single pixel.
+    Not all pixels of the video are returned, but only the (to YouBit)
+    relevant ones. This is because YouTube re-encodes 1fps videos
+    (which YouBit uses) into 6fps videos.
+    Superfluous frames are discarded automatically.
+    Can be iterated over, where each iteration is a single frame.
+    Or, the get_array() method can be used to extract an arbitrary
+    amount of pixels from the video at any given time.
+    Use a context manager to properly close the video container.
     """
 
     def __init__(self, vid: Union[str, Path], zero_frame: bool = False) -> None:
@@ -130,22 +143,27 @@ class VideoDecoder:
             self.stream.codec_context.height * self.stream.codec_context.width
         )
         # self.stream.thread_type = "AUTO" # seems to not help :(
-        self.stream.codec_context.skip_frame = "NONKEY"
+        self.stream.codec_context.skip_frame = "NONKEY"  # only reading keyframes
+        self.frames = self.container.decode(self.stream)
+        self.frames = (
+            frame.to_ndarray(format="gray").ravel()
+            for frame in self.frames
+            if ((frame.index - 11) % 17)  # skipping duplicate keyframes produced
+            # by YouTube re-encoding 1 fps videos as 6fps videos.
+        )
         if zero_frame:
-            self.frames = islice(self.container.decode(self.stream), 0, None, 2)
-        else:
-            self.frames = self.container.decode(self.stream)
+            # step of 2 if zero_frames were used
+            self.frames = islice(self.frames, None, None, 2)
         self.cache = np.empty(0, dtype=np.uint8)
 
     def get_array(self, length) -> ndarr_1d_uint8:
-        """Extracts (length) pixels from the video, returning a numpy uint8 ndarray
-        where each element represents one pixel.
-        This still uses the get_frame() method, calling it as many times as is
-        needed to extract the given amount of pixels. A cache is kept of pixels
-        that have been decoded by get_frame() but have not yet been returned
-        by this function. Abstracts frames away.
+        """Extracts the next {length} pixels from the video, returning a numpy
+        uint8 ndarray where each element represents one pixel.
+        Abstracts away frames by decoding as many frames as are needed to reach the
+        requested {length}, and keeping a cache of any surplus data that is than
+        returned the next time this method is called.
         """
-        frame_count = -((length - self.cache.size) / -self.framesize)
+        frame_count = -((length - self.cache.size) // -self.framesize)
         if self.cache.size:
             frames = [self.cache]
             self.cache = np.empty(0, dtype=np.uint8)
@@ -153,7 +171,7 @@ class VideoDecoder:
             frames = []
         for _ in range(frame_count):
             try:
-                frames.append(self.get_frame())
+                frames.append(next(self.frames))
             except StopIteration:
                 break
         if len(frames) == 0:
@@ -166,29 +184,12 @@ class VideoDecoder:
             arr = arr[:-surplus] 
         return arr
 
-    def get_frame(self) -> ndarr_1d_uint8:
-        """Reads 1 frame of the video, returning it as a numpy uint8 array.
-        Properly skips over duplicate keyframes. It does this by simply filtering
-        out certain indexes. We could also compare the current frame to the next
-        to see if they are similar (enough) to be considered duplicates, but this
-        process would be very time complex and possibly inconsistent.
-        Because we use known indexes, this only works when the video has passed
-        through YouTube, where it was re-encoded from 1 fps to 6.
-        """
-        frame: Any = next(self.frames)
-        if not (
-            (frame.index - 11) % 17
-        ):  # The frames at index 11, 28, 45, 64... (the 12th + interval of 17) are duplicate keyframes and must be skipped.
-            frame = next(self.frames)
-        arr: ndarr_1d_uint8 = frame.to_ndarray(format="gray").ravel()
-        return arr
-
     def __iter__(self) -> Any:
-        return self
+        return self.frames
 
     def __next__(self) -> ndarr_1d_uint8:
         try:
-            return self.get_frame()
+            return next(self.frames)
         except StopIteration as e:
             self.close()
             raise e

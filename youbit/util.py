@@ -8,7 +8,7 @@ from typing import Union, Any
 
 import numpy as np
 
-from youbit.types import ndarr_1d_uint8
+# from youbit.types import ndarr_1d_uint8
 
 
 def dict_to_b64(obj: dict[Any, Any]) -> str:
@@ -21,18 +21,18 @@ def b64_to_dict(b64: str) -> dict[Any, Any]:
     return pickle.loads(base64.b64decode(bytes(b64, encoding="utf8")))
 
 
-def load_ndarray(file: Path) -> ndarr_1d_uint8:
-    """Reads a file and loads it into a numpy uin8 array."""
-    return np.fromfile(file, dtype=np.uint8)
+# def load_ndarray(file: Path) -> ndarr_1d_uint8:
+#     """Reads a file and loads it into a numpy uin8 array."""
+#     return np.fromfile(file, dtype=np.uint8)
 
 
-#! these 2 are supposed to have some chunking functionality or smthn idk
+# #! these 2 are supposed to have some chunking functionality or smthn idk
 
 
-def load_bytes(file: Union[Path, str]) -> bytes:
-    """Reads a file and loads it into a bytes object."""
-    with open(file, "rb") as f:
-        return f.read()
+# def load_bytes(file: Union[Path, str]) -> bytes:
+#     """Reads a file and loads it into a bytes object."""
+#     with open(file, "rb") as f:
+#         return f.read()
 
 
 def is_url(txt: str) -> bool:
@@ -71,7 +71,8 @@ def compare_files(file1: Union[str, Path], file2: Union[str, Path]) -> dict[str,
     Use this to compare the input and ouput of YouBit.
     """
     file1, file2 = Path(file1), Path(file2)
-    arr1, arr2 = load_ndarray(file1), load_ndarray(file2)
+    arr1 = np.fromfile(file1, dtype=np.uint8)
+    arr2 = np.fromfile(file2, dtype=np.uint8)
     size_difference = abs(arr1.size - arr2.size)
     zeros = np.zeros(size_difference, dtype=np.uint8)
     if arr1.size < arr2.size:

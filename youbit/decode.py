@@ -45,10 +45,10 @@ def read_pixels(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
     element represents a byte.
     The reverse of youbit.encode.transform_array().
     Since the elements are joined back together into bytes,
-    the input array needs to be a factor of 8.
+    the input array needs to be a factor of 8!
     """
-    if arr.size % (bpp * 8):
-        raise ValueError(f'The length of the given array ({arr.size}) is not divisible by 8.')
+    if arr.size % 8:
+        raise ValueError(f'The length of the given array ({arr.size}) is not a factor of 8.')
     if bpp == 1:
         out = np.zeros(arr.size, dtype=np.uint8)
         _numba_read_bpp1(arr, out)
