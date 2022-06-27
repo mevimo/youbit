@@ -1,3 +1,6 @@
+"""
+Everything concerning the upload process.
+"""
 import time
 from typing import Any, Union
 from pathlib import Path
@@ -10,22 +13,32 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.expected_conditions import element_to_be_clickable
+from webdriver_manager.chrome import ChromeDriverManager
 import browser_cookie3
 
 
-C_XPATH_UPLOAD_STATUS = '/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span'
+C_XPATH_UPLOAD_STATUS = (
+    "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/"
+    "ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span"
+)
 
 
 class Uploader:
-    def __init__(self, browser: str, headless: bool = True, suppress: bool = True) -> None:
+    """Uploads a video to YouTube. Uses a selenium browser instance to do this.
+    For authentication, cookies are extracted from the user's browser of choice.
+    The currently logged in account in that browser will be used for upload.
+    Make sure have gone to 'studio.youtube.com' with the account you wish to use, before
+    using this. It will not traverse dialogue popups that you might encounter while going
+    there for the first time, such as the one that asks for a channel name.
+    Make sure there are no popups about anything when you go to 'studio.youtube.com'
+    on the account in question.
+    """
+
+    def __init__(
+        self, browser: str, headless: bool = True, suppress: bool = True
+    ) -> None:
         """Initiliazes the selenium webdriver and injects it with the proper cookies.
-        Make sure have gone to 'studio.youtube.com' with the account you wish to use, before
-        using this. It will not traverse dialogue popups that you might encounter while going
-        there for the first time, such as the one that asks for a channel name.
-        Make sure there are no popups about anything when you go to 'studio.youtube.com'
-        on the account in question.
 
         :param browser: The browser to extract YouTube cookies from. The currently logged in
             account will be used for upload. Supported arguments are 'chrome', 'firefox',
@@ -35,18 +48,22 @@ class Uploader:
         :type headless: bool, optional
         :param suppress: Suppress selenium stdout, defaults to True
         :type suppress: bool, optional
-        :raises ValueError: If the passer 'browser' argument is not recognized.
+        :raises ValueError: If the passed 'browser' argument is not recognized.
         """
         options: Any = Options()
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
         if suppress:
-            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            options.add_experimental_option("excludeSwitches", ["enable-logging"])
         if headless:
             options.add_argument("--headless")
             options.add_argument(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
-        logging.getLogger('WDM').setLevel(logging.NOTSET)  # Turns off the webdriver_manager logging
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+            )
+        logging.getLogger("WDM").setLevel(
+            logging.NOTSET
+        )  # Turns off the webdriver_manager logging
         service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=service, options=options)
 
@@ -83,10 +100,26 @@ class Uploader:
             }
         )
 
-    def upload(self, filepath: Union[str, Path], desc: str, title: str = str(time.time())) -> str:
+    def upload(
+        self,
+        filepath: Union[str, Path],
+        desc: str,
+        title: str,
+    ) -> str:
+        """Uploads a video to YouTube.
+
+        :param filepath: The file to upload.
+        :type filepath: str or Path
+        :param desc: The video description to use.
+        :type desc: str
+        :param title: The title to use for the video.
+        :type title: str, optional
+        :return: The url of the video.
+        :rtype: str
+        """
         self.browser.get("https://studio.youtube.com/")
         time.sleep(1)
-        self.browser.find_element(By.ID, 'upload-icon').click()
+        self.browser.find_element(By.ID, "upload-icon").click()
         self.browser.find_element(By.CSS_SELECTOR, 'input[name="Filedata"]').send_keys(
             str(filepath)
         )
@@ -110,7 +143,7 @@ class Uploader:
         self.browser.find_element(By.ID, "next-button").click()
         self.browser.find_element(By.ID, "next-button").click()
 
-        time.sleep(0.5)
+        time.sleep(0.1)
         self.browser.find_element(By.NAME, "UNLISTED").find_element(
             By.ID, "radioLabel"
         ).click()
@@ -119,11 +152,11 @@ class Uploader:
             return driver.find_element(
                 By.CSS_SELECTOR, ".video-url-fadeable > .ytcp-video-info"
             ).text
+
         video_url = WebDriverWait(self.browser, timeout=20).until(url_not_empty)
 
         status = self.browser.find_element(By.XPATH, C_XPATH_UPLOAD_STATUS)
-        while 'Uploading' in status.text:
-            print(status.text)
+        while "Uploading" in status.text:
             time.sleep(0.5)
 
         done_btn = self.browser.find_element(By.ID, "done-button")
@@ -133,15 +166,3 @@ class Uploader:
         time.sleep(0.5)
         self.browser.quit()
         return video_url
-
-
-##TODO remove this in production
-if __name__ == "__main__":
-    uploader = Uploader(browser="firefox", headless=True)
-    # uploader.browser.get('https://studio.youtube.com/')
-    url = uploader.upload(
-        filepath="E:/test_video_encode.mp4", title="POOPY", desc="please fokin work"
-    )
-    print("------------------------------")
-    print(type(url))
-    print(url)

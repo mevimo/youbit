@@ -5,19 +5,21 @@ from youbit.download import Downloader
 from tests.conftest import long
 
 
-C_TEST_VIDEO_URL = "https://www.youtube.com/watch?v=48jf81upU5M"
+C_TEST_VIDEO_URL = "https://www.youtube.com/watch?v=dnhlx48t-h4"
 C_TEST_VIDEO_METADATA = {
-    "original_MD5": "800235d5eb47e2684e333a33ca54a9aa",
-    "ecc_symbols": 32,
+    "original_MD5": "27ca391a382cc0287abd317904057125",
+    "filename": "youbit-example.jpg",
+    "resolution": (1920, 1080),
     "bpp": 1,
-    "resolution": "1920x1080",
+    "zero_frame": False,
+    "ecc_symbols": 32,
 }
 
 
 @long
 def test_download(tempdir):
     """WHEN we use a youbit.download.Downloader object to downlaod a YouTube video.
-    THEN check if download succeeds and extracted metadata is correct. 
+    THEN check if download succeeds and extracted metadata is correct.
     """
     downloader = Downloader(C_TEST_VIDEO_URL)
     video_path = downloader.download(tempdir, tempdir)

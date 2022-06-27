@@ -1,12 +1,14 @@
+"""
+The main API of YouBit, concerns itself with I/O, chunking and temporary files.
+"""
 from __future__ import annotations
-from typing import Optional, Any, Union, Tuple
+from typing import Optional, Any, Union, Tuple, Callable
 from pathlib import Path
 import atexit
 import signal
 import shutil
 import tempfile
 import os
-import time
 import gzip
 
 import numpy as np
@@ -54,35 +56,37 @@ class TempdirMixin:
 
 
 class Encoder(TempdirMixin):
-    def __init__(self, input: Union[str, Path]) -> None:
-        self.input = Path(input)
+    """Encodes files into YouBit videos, and optionally uploads them to YouTube."""
+    def __init__(self, input_file: Union[str, Path]) -> None:
+        self.input = Path(input_file)
         if not self.input.exists():
             raise ValueError(
-                f"Invalid input argument '{input}'. Must be a valid file location."
+                f"Invalid input argument '{input_file}'. Must be a valid file location."
             )
         if not self.input.is_file():
             raise ValueError("You must provide a file.")
         self.metadata: dict[str, Any] = {
             "original_MD5": youbit.util.get_md5(self.input),
-            "file_extension": self.input.suffix,
+            "filename": str(self.input.name),
         }
         TempdirMixin.__init__(self)
 
     def encode(
         self,
-        path: Optional[Union[str, Path]] = None,
+        directory: Optional[Union[str, Path]] = None,
         ecc: Optional[int] = 32,
         res: Union[Tuple[int, int], str] = (1920, 1080),
         bpp: int = 1,
         crf: int = 18,
         zero_frame: bool = False,
-        overwrite: bool = False,
-    ) -> None:
+        # overwrite: bool = False,
+    ) -> Optional[Path]:
         """Encodes a file into a YouBit video.
 
-        :param path: Use this parameter if you want to upload the
-            video yourself. YouBit will create a directory at this path
-            and save in it the encoded video as well as the required metadata.
+        :param directory: Use this parameter if you want to upload the
+            video yourself. YouBit will create a a new directory in this
+            directory and save in it the encoded video as well as the
+            metadata required for upload.
         :type path: str or pathlike object, optional
         :param overwrite: If parameter `path` is specified, this parameter can
             be used to allow overwriting files at target location, defaults to
@@ -129,34 +133,19 @@ class Encoder(TempdirMixin):
                 self.metadata["resolution"] = (7680, 4320)
             else:
                 raise ValueError(
-                    f"Invalid resolution argument '{res}'. Must be a tuple or one of 'hd', '2k', '4k' or '8k'."
+                    f"Invalid resolution argument '{res}'."
+                    "Must be a tuple or one of 'hd', '2k', '4k' or '8k'."
                 )
         self.metadata["bpp"] = bpp
         self.metadata["zero_frame"] = zero_frame
         self.metadata["ecc_symbols"] = ecc
-        if path:
-            path = Path(path)
-            if path.exists() and overwrite:
-                shutil.rmtree(path)
-            os.mkdir(path)
-            readme_file = Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
-            shutil.copy(readme_file, (path / "README.txt"))
-            metadata_path = path / "metadata.txt"
-            with open(metadata_path, "w") as f:
-                f.write(youbit.util.dict_to_b64(self.metadata))
-            if path.suffix not in (".mkv", ".mp4"):
-                self.output = path / (path.name + ".mp4")
-            else:
-                self.output = path / path.name
-        else:
-            self.output = self.tempdir / "encoded.mp4"
+        output = self.tempdir / "video.mp4"
 
-        video_encoder = youbit.video.VideoEncoder(  # This goes first so that ValueErrors can be raised before the actual encoding process, which can take a while.
-            output=self.output,
+        video_encoder = youbit.video.VideoEncoder(
+            output=output,
             res=self.metadata["resolution"],
             crf=crf,
             zero_frame=zero_frame,
-            overwrite=overwrite if path else True,
         )
 
         zipped_path = self.tempdir / "bin.gz"
@@ -196,13 +185,22 @@ class Encoder(TempdirMixin):
                 data = youbit.encode.transform_array(data, bpp)
                 video_encoder.feed(data)
         video_encoder.close()
+        zipped_path.unlink()
 
-        if os.path.getsize(self.output) > 137000000000:
+        if os.path.getsize(output) > 137000000000:
             raise RuntimeError("File is too large. The encoded video exceeds 128GB.")
 
-    def upload(
-        self, browser: str, title: str = str(time.time()), headless: bool = True
-    ) -> str:
+        if directory:
+            readme_file = Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
+            shutil.copy(readme_file, (self.tempdir / "README.txt"))
+            metadata_path = self.tempdir / "metadata.txt"
+            with open(metadata_path, "wt") as f:
+                f.write(youbit.util.dict_to_b64(self.metadata))
+            output = directory / ("YOUBIT-" + self.metadata["filename"])
+            output = shutil.make_archive(output, "zip", self.tempdir)
+            return output
+
+    def upload(self, browser: str, title: str = None, headless: bool = True) -> str:
         """Uploads the encoded file to YouTube. This process is automated
         with a Selenium webdriver, because of the various limitations on
         the YouTube API. This means this method needs a 'donor' browser
@@ -220,8 +218,9 @@ class Encoder(TempdirMixin):
         :param browser: Which browser to extract cookies from. Can be
             'chrome', 'firefox', 'edge', 'opera', 'brave' or 'chromium'.
         :type browser: str
-        :param title: The title for the video
-        :type title: str
+        :param title: The title for the video. If None, filename will be used.
+            Defaults to None
+        :type title: str, optional
         :param headless: If set to False, Selenium will *not* run in headless
             mode and a browser window will appear on which you can inspect
             the automation. Defaults to True
@@ -231,14 +230,17 @@ class Encoder(TempdirMixin):
         """
         uploader = youbit.upload.Uploader(browser=browser, headless=headless)
         description = youbit.util.dict_to_b64(self.metadata)
-        video = self.tempdir / "encoded.mp4"
+        if title is None:
+            title = self.metadata["filename"]
+        video = self.tempdir / "video.mp4"
         url = uploader.upload(filepath=video, title=title, desc=description)
-        self.close()
         return url
 
 
 class Decoder(TempdirMixin):
-    def __init__(self, input: Union[str, Path]):
+    """Decodes YouBit videos back into the original file.
+    Can also download them first."""
+    def __init__(self, input: Union[str, Path], callback: Callable = None):
         if isinstance(input, str) and youbit.util.is_url(input):
             self.input: Union[str, Path] = input
             self.input_type = "url"
@@ -254,38 +256,43 @@ class Decoder(TempdirMixin):
             )
         TempdirMixin.__init__(self)
         self.new_md5: Optional[str] = None
+        self.callback = callback
 
-    def download(
-        self, path: Union[str, Path] = None
-    ) -> None:  # TODO add an option to download video to local?
+    def download(self) -> None:
+        """Download the YouTube video in question.
+
+        :raises ValueError: If the object was initialized with a path and not
+            a url.
+        """
         if self.input_type != "url":
             raise ValueError(
                 "You must initialize this object with a URL if you want to download anything."
             )
-        if path:
-            path = self.downloader.download(self.tempdir, Path(path))
-        else:
-            path = self.downloader.download(self.tempdir, self.tempdir)
-            self.downloaded = path
+        path = self.downloader.download(self.tempdir, self.tempdir)
+        self.downloaded = path
 
     def decode(
         self,
-        output: Union[str, Path],
+        directory: Union[str, Path] = Path(os.getcwd()),
         ecc: Optional[int] = None,
         bpp: Optional[int] = None,
         zero_frame: Optional[bool] = None,
-        overwrite: bool = False,
     ) -> Path:
         """Decodes a video back into original file.
 
-        :param output: Path to save file to.
+        :param output: Directory in which to save the file. Defaults to the current
+            working directory.
         :type output: str or Path
-        :param ecc: Only required when video was downloaded manually.
-            The amount of ECC symbols that were used during the encoding process.
-            0 if no error correction was used. Defaults to None
-        :type ecc: Optional[int], optional
-        :param bpp: _description_, defaults to None
-        :type bpp: Optional[int], optional
+        :param ecc: The amount of ECC symbols that were used during the encoding process.
+            0 if no error correction was used. Only required when decoding a local file
+            and not a URL. Defaults to None
+        :type ecc: int, optional
+        :param bpp: What 'bpp' or 'bits per pixel' value was used during encoding.
+            Only required when decoding a local file and not a URL. Defaults to None
+        :type bpp: int, optional
+        :param zero_frame: Whether not 'zero frames' were used during encoding. Only
+            required when decoding a local file and not a URL. Defaults to None
+        :type zero_frame: bool, optional
         :param overwrite: _description_, defaults to False
         :type overwrite: bool, optional
         :raises ValueError: _description_
@@ -296,30 +303,44 @@ class Decoder(TempdirMixin):
         """
         if self.input_type == "url":
             if not self.downloaded:
-                raise ValueError(
-                    "Download the video first."
-                )  ## todo should not be valueerrror
+                raise RuntimeError("Download the video first.")
             file = self.downloaded
+            og_filename = Path(self.metadata["filename"])
             ecc = self.metadata["ecc_symbols"]
             bpp = self.metadata["bpp"]
             zero_frame = self.metadata["zero_frame"]
         elif self.input_type == "path":
             file = self.input  # type: ignore
+            og_filename = self.input.name
             if bpp is None:
-                raise ValueError("Missing argument: bpp")
+                raise ValueError("Missing argument: bpp.")
             if ecc is None:
-                raise ValueError("Missing argument: ecc")
+                raise ValueError("Missing argument: ecc.")
             if zero_frame is None:
-                raise ValueError("Missing argument: zero_frame")
+                raise ValueError("Missing argument: zero_frame.")
 
-        output = Path(output)
-        if output.suffix != self.metadata["file_extension"]:
-            output = Path(str(output) + self.metadata["file_extension"])
-        if output.exists() and not overwrite:
-            raise FileExistsError(f"File {output} already exists.")
+        # output = Path(output)
+        # if output.suffix != self.metadata["file_extension"]:
+        #     output = Path(str(output) + self.metadata["file_extension"])
+        # if output.exists() and not overwrite:
+        #     raise FileExistsError(f"File {output} already exists.")
+        directory = Path(directory)
+        if not directory.exists():
+            raise ValueError(f"Directory {directory} does not exist.")
+        if not directory.is_dir():
+            raise ValueError(f"{directory} is not a directory.")
+        output = directory / og_filename
+        i = 0
+        while output.exists():
+            i += 1
+            output = Path(
+                output.parent / (og_filename.stem + f"({i})" + og_filename.suffix)
+            )
 
         zipped_path = self.tempdir / "bin.gz"
-        chunk_size = 255 * 1000000  # needs to be a factor of 255 (for ecc_decode) and 8 (for read_pixels)
+        chunk_size = (
+            255 * 1000000
+        )  # needs to be a factor of 255 (for ecc_decode) and 8 (for read_pixels)
         with youbit.video.VideoDecoder(vid=file, zero_frame=zero_frame) as decoder:
             with open(zipped_path, "wb") as f:
                 while True:
@@ -335,21 +356,7 @@ class Decoder(TempdirMixin):
             shutil.copyfileobj(f_in, f_out)
         self.new_md5 = youbit.util.get_md5(output)
         self.close()
-
-
-        # frames = []
-        # for frame in youbit.video.VideoDecoder(vid=file):
-        #     frame = youbit.decode.read_pixels(frame, bpp)
-        #     frames.append(frame)
-        # output_arr = np.concatenate(frames, dtype=np.uint8)
-        # if ecc > 0:
-        #     output_bytes = youbit_ecc.ecc_decode(output_arr.tobytes(), ecc)
-        #     with open(str(output), "wb") as f:
-        #         f.write(output_bytes)
-        # else:
-        #     output_arr.tofile(str(output))
-        # self.new_md5 = youbit.util.get_md5(output)
-        # self.close()
+        return output
 
     def verify_checksum(self) -> bool:
         """Compares the MD5 checksum of the original file to

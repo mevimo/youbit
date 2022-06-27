@@ -1,7 +1,7 @@
 YOUBIT MANUAL UPLOAD:
 
 
-    - Upload the 'output.yb.mp4' file in this directory to YouTube.
+    - Upload the 'video.mp4' file in this archive to YouTube.
 
     - Title can be anything you want.
 

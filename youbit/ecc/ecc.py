@@ -1,3 +1,6 @@
+"""
+Provides a small interface between creedsolo.pyx and the rest of YouBit.
+"""
 from youbit.ecc.creedsolo import RSCodec
 
 
@@ -17,10 +20,12 @@ def ecc_encode(data: bytes, ecc_symbols: int = 32) -> bytes:
     :rtype: bytes
     """
     if not 0 < ecc_symbols < 255:
-        raise ValueError(f'Invalid symbols argument: {ecc_symbols}. Must be between 0 and 255 exclusive.') 
-    if (mod := len(data) % (255-ecc_symbols)):
-        padding_count = (255-ecc_symbols) - mod
-        padding = bytearray([0]*padding_count)
+        raise ValueError(
+            f"Invalid symbols argument: {ecc_symbols}. Must be between 0 and 255 exclusive."
+        )
+    if mod := len(data) % (255 - ecc_symbols):
+        padding_count = (255 - ecc_symbols) - mod
+        padding = bytearray([0] * padding_count)
         data = bytearray(data)
         data.extend(padding)
         # Let's say our {data} is not a factor of 255. If we divide it by 255,
@@ -56,5 +61,7 @@ def ecc_decode(data: bytes, symbols: int) -> bytes:
     :rtype: bytes
     """
     if not 0 < symbols < 255:
-        raise ValueError(f'Invalid symbols argument: {symbols}. Must be between 0 and 255 exclusive.') 
+        raise ValueError(
+            f"Invalid symbols argument: {symbols}. Must be between 0 and 255 exclusive."
+        )
     return RSCodec(symbols).decode(data)[0]  # type: ignore

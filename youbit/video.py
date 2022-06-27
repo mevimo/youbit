@@ -1,3 +1,7 @@
+"""
+Houses the VideoEncoder and VideoDecoder class, to encode arrays into
+YouBit video's and decode those back into errays respectively.
+"""
 from pathlib import Path
 from typing import Any, Union, Tuple
 import warnings
@@ -34,7 +38,8 @@ class VideoEncoder:
         :type framerate: int, optional
         :param res: The desired video resolution, defaults to (1920, 1080)
         :type res: tuple[int, int], optional
-        :param crf: The desired 'crf' or 'Constant Rate Factor' to use during encoding, defaults to 0
+        :param crf: The desired 'crf' or 'Constant Rate Factor' to use during
+            encoding, defaults to 0
         :type crf: int, optional
         :param overwrite: Whether or not allow overwriting existing files, defaults to False
         :type overwrite: bool, optional
@@ -42,7 +47,8 @@ class VideoEncoder:
             Zero frames are completely black frames, all zeros, defaults to 0
         :type zero_frames: int, optional
         :raises ValueError: If argument 'crf' is not between 0 and 52 inclusive
-        :raises FileExistsError: If 'output' path specified already has an existing file, and the 'overwrite' argument is set to False
+        :raises FileExistsError: If 'output' path specified already has an existing file,
+             and the 'overwrite' argument is set to False
         """
         if crf not in range(0, 53):
             raise ValueError(
@@ -148,7 +154,7 @@ class VideoDecoder:
         self.frames = (
             frame.to_ndarray(format="gray").ravel()
             for frame in self.frames
-            if ((frame.index - 11) % 17)  # skipping duplicate keyframes produced
+            if (frame.index - 11) % 17  # skipping duplicate keyframes produced
             # by YouTube re-encoding 1 fps videos as 6fps videos.
         )
         if zero_frame:
@@ -181,7 +187,7 @@ class VideoDecoder:
         if arr.size > length:
             surplus = arr.size - length
             self.cache = arr[-surplus:]
-            arr = arr[:-surplus] 
+            arr = arr[:-surplus]
         return arr
 
     def __iter__(self) -> Any:
@@ -201,4 +207,5 @@ class VideoDecoder:
         self.close()
 
     def close(self) -> None:
+        """Closes the video container."""
         self.container.close()

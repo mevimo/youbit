@@ -1,3 +1,6 @@
+"""
+Utility functions for YouBit.
+"""
 import re
 import hashlib
 import os
@@ -7,8 +10,6 @@ from pathlib import Path
 from typing import Union, Any
 
 import numpy as np
-
-# from youbit.types import ndarr_1d_uint8
 
 
 def dict_to_b64(obj: dict[Any, Any]) -> str:
@@ -21,30 +22,12 @@ def b64_to_dict(b64: str) -> dict[Any, Any]:
     return pickle.loads(base64.b64decode(bytes(b64, encoding="utf8")))
 
 
-# def load_ndarray(file: Path) -> ndarr_1d_uint8:
-#     """Reads a file and loads it into a numpy uin8 array."""
-#     return np.fromfile(file, dtype=np.uint8)
-
-
-# #! these 2 are supposed to have some chunking functionality or smthn idk
-
-
-# def load_bytes(file: Union[Path, str]) -> bytes:
-#     """Reads a file and loads it into a bytes object."""
-#     with open(file, "rb") as f:
-#         return f.read()
-
-
 def is_url(txt: str) -> bool:
     """Check if passed string is a URL or not."""
     regex = r"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$"
     if re.search(regex, txt):
         return True
     return False
-
-
-# def bytes_to_ndarray(data: bytes) -> ndarr_1d_uint8:
-#     return np.frombuffer(data, dtype=np.uint8)
 
 
 def get_md5(file: Union[str, Path]) -> str:
@@ -94,8 +77,3 @@ def compare_files(file1: Union[str, Path], file2: Union[str, Path]) -> dict[str,
         "incorrect_indices": (~mask).nonzero()[0],
     }
     return result
-
-
-def test_error_rate():
-    pass
-    ##  encode, upload, donwload, decode, and compare_files(). can only do once download and upload work

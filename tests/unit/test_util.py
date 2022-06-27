@@ -9,11 +9,7 @@ def test_base64_encoding():
     to encode a dictionary to a base64 string, and decode it back to a dictionary
     THEN check if the result is equal to the original input
     """
-    test_dict = {
-        'foo': 'bar',
-        'hello': 'world',
-        'integer': 6
-    }
+    test_dict = {"foo": "bar", "hello": "world", "integer": 6}
     b64_string = util.dict_to_b64(test_dict)
     assert isinstance(b64_string, str)
     dict_again = util.b64_to_dict(b64_string)
@@ -22,15 +18,7 @@ def test_base64_encoding():
 
 
 def test_is_url():
-    valid_url = [
-        'https://www.google.com',
-        'http://www.google.com',
-        'www.google.com'
-    ]
-    invalid_url = [
-        'htt://www.google.com',
-        '://www.google.com',
-        'E:/foo/bar'
-    ]
+    valid_url = ["https://www.google.com", "http://www.google.com", "www.google.com"]
+    invalid_url = ["htt://www.google.com", "://www.google.com", "E:/foo/bar"]
     assert all(list(map(util.is_url, valid_url)))
     assert not any(list(map(util.is_url, invalid_url)))
