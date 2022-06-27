@@ -21,10 +21,6 @@ class Browser(str, Enum):
 
 
 app = typer.Typer(help="YouBit CLI", no_args_is_help=True, add_completion=False)
-encode_app = typer.Typer(no_args_is_help=True)
-app.add_typer(encode_app, name="encode")
-decode_app = typer.Typer(no_args_is_help=True)
-app.add_typer(decode_app, name="decode")
 test_app = typer.Typer(no_args_is_help=True)
 app.add_typer(test_app, name="test")
 
@@ -114,7 +110,7 @@ def test_compare(file1: Path = typer.Argument(...), file2: Path = typer.Argument
         pprint(v)
 
 
-@encode_app.command("local", no_args_is_help=True)
+@app.command("encode", no_args_is_help=True)
 def encode_local(
     input: Path = typer.Argument(..., help="A path to the file you wish to encode."),
     output: Path = typer.Argument(
@@ -144,14 +140,14 @@ def encode_local(
     console.print(f"[green]File saved at: {path}.[/]")
 
 
-@encode_app.command("upload", no_args_is_help=True)
+@app.command("upload", no_args_is_help=True)
 def encode_upload(
     input: Path = typer.Argument(..., help="A path to the file you wish to encode."),
     browser: Browser = typer.Argument(
         ...,
-        help="Which browser to extract the currently logged-in user (YouTube)"
-        "from for upload. MAKE SURE this user has previously visited"
-        "studio.youtube.com' and there are no more popops"
+        help="Which browser to extract the currently logged-in user (YouTube) "
+        "from for upload. MAKE SURE this user has previously visited "
+        "studio.youtube.com' and there are no more popops "
         "like 'choose channel name').",
         case_sensitive=False,
     ),
@@ -181,7 +177,7 @@ def encode_upload(
     console.print(f"[bold green]>>> [link={url}]{url}[/link] <<<[/]")
 
 
-@decode_app.command("local", no_args_is_help=True)
+@app.command("decode", no_args_is_help=True)
 def decode_local(
     input: Path = typer.Argument(..., help="A path to the file you wish to decode."),
     output: Path = typer.Argument(
@@ -208,7 +204,7 @@ def decode_local(
     console.print(f"[green]File saved at: {str(output)}.[/]")
 
 
-@decode_app.command("url", no_args_is_help=True)
+@app.command("download", no_args_is_help=True)
 def decode_url(
     input: str = typer.Argument(
         ..., help="The YouTube URL of the video you wish to decode."
