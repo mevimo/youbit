@@ -1,6 +1,6 @@
 """
 This file concerns itself with the transformation of binary data
-in such a way that it can be used as pixel-values in a picture of video.
+in such a way that it can be used as pixel-values in a picture or video.
 """
 import numpy as np
 from numba import njit, prange
