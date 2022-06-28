@@ -151,7 +151,7 @@ However, it also introduces more corrupt pixels.
 
 A bpp of 1 means each pixel only has 2 states, 1 and 0, on and off, white and black. This means our greyscale pixels have a value of either 255 (white) or 0 (black). During decoding, YouBit treats anything 128 or more as a 1, and everything below 128 as a 0. This means YouTube's compression needs to change a pixel's value by at least 127 for it to become corrupt.
 
-Now consider a bpp of 2. Two bits have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0, 85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel.
+Now consider a bpp of 2. Two bits have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0,85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel. Our video will be half the size, but easier to corrupt when YouTube re-encodes it during upload.
 <br><br>
 
 ## Why a framerate of 1?
@@ -213,6 +213,14 @@ The idea is that YouTube will still allocate the same bitrate, but since the vid
 
 This is still a useful ~40% effective inrease in effective available bandwidth, leading to less errors and a potentially higher information density.
 On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
+<br><br>
+
+
+## Why not upload lossless videos?
+Compressing the video locally (before YouTube will compress it *again*) might seem like a very bad idea if we want our data to remain intact.
+However, the difference in filesize is very big. And as soon as the encoding process is reasonably effcient, the time it takes to upload the video to YouTube becomes by far the biggest bottleneck. If we carefully control the amount of compressing that we do locally, we can make our video alot smaller (and faster to upload) without affecting data integrity all that much.
+
+That being said, changing the 'crf' option in YouBit allows you to control this variable. It is simply the [Constant Rate Factor](https://slhck.info/video/2017/02/24/crf-guide.html) setting that is passed to the x264 codec.
 <br><br>
 
 
