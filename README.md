@@ -130,6 +130,7 @@ When YouBit handles the download, it extracts this metadata from the comments of
 - [Why not you use the YouTube API for uploads?](#why-not-use-the-youtube-api-for-uploads)
 - [After uploading, how long do I have to wait to download A YouBit video again?](#after-uploading-how-long-do-i-have-to-wait-to-download-a-youbit-video-again)
 - [How large can my file be?](#how-large-can-my-file-be)
+- [Why not upload lossless videos?](#why-not-upload-lossless-videos)
 - [What settings should I use?](#what-settings-should-i-use)
 <br><br>
 
