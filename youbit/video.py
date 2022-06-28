@@ -1,6 +1,6 @@
 """
 Houses the VideoEncoder and VideoDecoder class, to encode arrays into
-YouBit video's and decode those back into errays respectively.
+YouBit video's and decode those back into arrays respectively.
 """
 from pathlib import Path
 from typing import Any, Union, Tuple
