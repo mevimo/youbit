@@ -1,4 +1,16 @@
 <p align="center">
+<a href="https://github.com/MeViMo/youbit/blob/main/LICENSE" target="_blank">
+    <img src="https://img.shields.io/pypi/l/youbit?color=99ddcc" alt="License">
+</a>
+<a href="https://pypi.org/project/youbit/" target="_blank">
+    <img src="https://img.shields.io/pypi/v/youbit?color=99ddcc" alt="Package version">
+</a>
+<a href="#" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/youbit?color=%2399DDCC" alt="Python versions">
+</a>
+</p>
+
+<p align="center">
     <img src="https://i.imgur.com/SsCzuP3.png" alt="YouBit visual">
     </br>
 </p>
