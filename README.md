@@ -36,7 +36,7 @@ Encode and upload a file:
 ```
 python -m youbit upload C:/myfile.txt firefox
 ```
-**NOTE**: If you want YouBit to upload video's for you, **chrome** needs to be installed.
+**NOTE**: If you want YouBit to upload videos for you, **chrome** needs to be installed.
 The 'firefox' argument denotes which browser YouBit should extract cookies from to authenticate itself with YouTube.
 In this example, the currently logged-in account in *firefox* will be used. Can be any of ('firefox', 'chrome', 'edge', 'brave', 'opera', 'chromium').
 *Make sure* this account has gone to [studio.youtube.com](https://studio.youtube.com) before using it with YouBit.
@@ -164,13 +164,13 @@ Secondarily, using a framerate of 1 during encoding allows us to **read only [ke
 This is *very* important. Testing showed a massive delta in corruption between keyframes and B- or P-frames. Many keyframes would be completely void of any errors, while some B-frames at the end of a [GOP](https://en.wikipedia.org/wiki/Group_of_pictures) would be almost entirely unusable.
 
 If we use a framerate of 1, YouTube will re-encode it as a video with a framerate of 6. This seems to be the minimum on YouTube.
-After analyzing the (open) GOP structure of these 6fps video's, it became apparent that just skipping any non-keyframes during the decoding process is not enough. We would see *duplicate* keyframes scattered around. Fortunately, these duplicate keyframes are predicatable. YouBit discards what it knows to be duplicate keyframes during the decoding process.
+After analyzing the (open) GOP structure of these 6fps videos, it became apparent that just skipping any non-keyframes during the decoding process is not enough. We would see *duplicate* keyframes scattered around. Fortunately, these duplicate keyframes are predicatable. YouBit discards what it knows to be duplicate keyframes during the decoding process.
 
-This *does* mean that YouBit video's that did **not** go through YouTube, **cannot** be decoded.
+This *does* mean that YouBit videos that did **not** go through YouTube, **cannot** be decoded.
 <br><br>
 
 ## Why not use the YouTube API for uploads?
-There are 2 reasons. For one, unverified API projects can only upload private video's. These videos are locked to being private and this cannot be changed. This means YouBit links would not be able to be shared between users. (And no, getting this project verified by Google is not an option for obvious reasons).
+There are 2 reasons. For one, unverified API projects can only upload private videos. These videos are locked to being private and this cannot be changed. This means YouBit links would not be able to be shared between users. (And no, getting this project verified by Google is not an option for obvious reasons).
 
 Secondly, The YouTube Data API v3 works with a quota system: all interactions with the API have an associated cost. Uploading a video costs a staggering 1600 points, out of 10,000 points that are replenished daily. This would limit the user to a measly 6 uploads per day.
 
@@ -208,7 +208,7 @@ Resolutions higher than 1080p are supported, but should generally not be used. I
 
 ## How large can my file be?
 YouBit encodes your files in chunks, so we are not limited by memory, but we are limited by YouTube's maximum video length.
-YouTube video's are allowed to be up to 12 hours long, or 128GB, whichever comes first.
+YouTube videos are allowed to be up to 12 hours long, or 128GB, whichever comes first.
 YouBit will raise exceptions during the encoding process if either of these are violated.
 (*If the YouTube account you are using is not verified, the limit is 15 minutes instead. Be sure to verify your account.*)
 
@@ -219,7 +219,7 @@ To give you an idea, the default settings will stop working with files larger th
 
 ## What is a 'zero frame'?
 YouBit has the option to use 'zeroframes'. If enabled, YouBit will interject completely black frames in between real frames when generating the video.
-The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: video's with zero frames have a lower bitrate, but not half. 1080p video's seem to get a bitrate of 7000, compared to the usual 10200.
+The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: videos with zero frames have a lower bitrate, but not half. 1080p videos seem to get a bitrate of 7000, compared to the usual 10200.
 
 This is still a useful ~40% effective inrease in effective available bandwidth, leading to less errors and a potentially higher information density.
 On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
