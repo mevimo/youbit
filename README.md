@@ -22,6 +22,8 @@ YouTube imposes no limits on the number of videos you can upload.
 
 This is not a novel idea and has been explored by other projects such as [YouTubeDrive](https://github.com/dzhang314/YouTubeDrive) and [fvid](https://github.com/AlfredoSequeida/fvid). However, these projects left alot of good ideas on the table. YouBit adds a bunch of features, ideas and options to the base concept, while making a reasonable attempt at being performant.
 <br><br>
+:warning: **If you use YouBit, and Google does not like it, they might sanction the account. Use at your own risk!** :warning:
+<br><br>
 
 
 # Installation
