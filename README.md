@@ -130,6 +130,7 @@ When YouBit handles the download, it extracts this metadata from the comments of
 - [Why a framerate of 1?](#why-a-framerate-of-1)
 - [Why not you use the YouTube API for uploads?](#why-not-use-the-youtube-api-for-uploads)
 - [After uploading, how long do I have to wait to download A YouBit video again?](#after-uploading-how-long-do-i-have-to-wait-to-download-a-youbit-video-again)
+- [Why can I not use resolution x?](#why-can-i-not-use-resolution-x)
 - [How large can my file be?](#how-large-can-my-file-be)
 - [Why not upload lossless videos?](#why-not-upload-lossless-videos)
 - [What settings should I use?](#what-settings-should-i-use)
@@ -195,6 +196,13 @@ py -m youbit test vbr https://www.youtube.com/watch?v=SLP9mbCuhJc
 
 The decoding process might very well still work with a lower VBR, it all depends on the settings that were used.
 There's no real advantage to using higher resolutions than the default of 1080p.
+<br><br>
+
+
+## Why can I not use resolution x?
+Technically YouBit can work with any resolution video, however, resolutions lower than 1920x1080 are not supported because the bitrate YouTube allocates to them does not always scale favourably for our use-case. It also introduces inconsistencies because YouTube may use different, less performant codecs based on the resolution.
+
+Resolutions higher than 1080p are supported, but should generally not be used. If you wish to experiment these might be of interest to you, but otherwise they just introduce a far longer *processing* time on YouTube's end.
 <br><br>
 
 
