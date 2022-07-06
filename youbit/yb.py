@@ -123,15 +123,14 @@ class Encoder(TempdirMixin):
                 )
             self.metadata["resolution"] = res
         else:
-            if res.lower() == "hd":
-                self.metadata["resolution"] = (1920, 1080)
-            elif res.lower() == "2k":
-                self.metadata["resolution"] = (2560, 1440)
-            elif res.lower() == "4k":
-                self.metadata["resolution"] = (3840, 2160)
-            elif res.lower() == "8k":
-                self.metadata["resolution"] = (7680, 4320)
-            else:
+            supported = {
+                "hd": (1920, 1080), 
+                "2k": (2560, 1440), 
+                "4k":  (3840, 2160), 
+                "8k":(7680, 4320)
+            }
+            self.metadata["resolution"] = supported.get(res.lower())
+            if self.metadata["resolution"] is None:
                 raise ValueError(
                     f"Invalid resolution argument '{res}'."
                     "Must be a tuple or one of 'hd', '2k', '4k' or '8k'."
