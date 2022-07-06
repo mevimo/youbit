@@ -319,11 +319,6 @@ class Decoder(TempdirMixin):
             if zero_frame is None:
                 raise ValueError("Missing argument: zero_frame.")
 
-        # output = Path(output)
-        # if output.suffix != self.metadata["file_extension"]:
-        #     output = Path(str(output) + self.metadata["file_extension"])
-        # if output.exists() and not overwrite:
-        #     raise FileExistsError(f"File {output} already exists.")
         directory = Path(directory)
         if not directory.exists():
             raise ValueError(f"Directory {directory} does not exist.")
