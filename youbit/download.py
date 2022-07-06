@@ -163,12 +163,11 @@ class Downloader:
         del self.opts[
             "format"
         ]  # So we can still use the .best_vbr property, since ytdlp will also use the custom format selector
-        file = [
-            f
-            for f in Path(output).iterdir()
+        vid = (
+            f for f in Path(output).iterdir()
             if f.is_file() and f.suffix in (".mp4", ".mkv")
-        ][0]  # This is not great, I know
-        return file
+        )  # This is not great, I know
+        return next(vid)
 
     def get_metadata(self) -> dict[Any, Any]:
         """Returns the YouBit metadata extract from the video description."""
