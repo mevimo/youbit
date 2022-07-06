@@ -54,14 +54,14 @@ Output is always saved in the current working directory unless specified otherwi
 
 Decode a a local video:
 ```
-python -m decode C:/myvideo.mp4
+python -m youbit decode C:/myvideo.mp4
 ```
 **NOTE**: This video *needs* to have been downloaded from YouTube. You cannot encode a file, and then immeadiately decode just to test it out.
 <br><br>
 
 Encode a file without uploading:
 ```
-python -m encode C:/myfile.txt
+python -m youbit encode C:/myfile.txt
 ```
 <br><br>
 
