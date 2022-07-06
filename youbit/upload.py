@@ -67,20 +67,18 @@ class Uploader:
         service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=service, options=options)
 
-        if browser == "chrome":
-            cookiejar = browser_cookie3.chrome()
-        elif browser == "firefox":
-            cookiejar = browser_cookie3.firefox()
-        elif browser == "opera":
-            cookiejar = browser_cookie3.opera()
-        elif browser == "edge":
-            cookiejar = browser_cookie3.edge()
-        elif browser == "chromium":
-            cookiejar = browser_cookie3.chromium()
-        elif browser == "brave":
-            cookiejar = browser_cookie3.brave()
+        supported = {
+            "chrome": browser_cookie3.chrome,
+            "firefox": browser_cookie3.firefox,
+            "opera": browser_cookie3.opera,
+            "edge": browser_cookie3.edge,
+            "chromium": browser_cookie3.chromium,
+            "brave": browser_cookie3.brave,
+        }
+        if (x := supported.get(browser.lower())):
+            cookiejar = x()
         else:
-            raise ValueError("Incompatible 'browser' argument.")
+            raise ValueError(f"Unsupported browser: {browser}")
 
         self.browser.get("https://www.youtube.com")
         for cookie in cookiejar:
