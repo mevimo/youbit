@@ -125,6 +125,12 @@ class Downloader:
             raise StillProcessingError
         usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
         best = usable_formats[0]
+        if best["vcodec"] == "vp9":
+            raise RuntimeError(
+                "This video was encoded using the VP9 codec. "
+                "This might be because the video in question got alot of views. "
+                "YouBit currently cannot decode this properly."
+            )
         if best["vbr"] < 6000:
             warnings.warn(
                 f"A very low video bitrate (vbr) of {best['vbr']} was detected. "
@@ -152,7 +158,7 @@ class Downloader:
 
         self.opts["format"] = self._format_selector
         try:
-            with open(os.devnull, "wb") as devnull, redirect_stderr(devnull):
+            with open(os.devnull, "w") as devnull, redirect_stderr(devnull):
                 with YoutubeDL(self.opts) as ydl:
                     ydl.download([self.url])
         except DownloadError as e:
@@ -165,9 +171,9 @@ class Downloader:
         ]  # So we can still use the .best_vbr property, since ytdlp will also use the custom format selector
         vid = (
             f for f in Path(output).iterdir()
-            if f.is_file() and f.suffix in (".mp4", ".mkv")
+            if f.is_file() and f.suffix in (".mp4", ".mkv", ".webm")
         )  # This is not great, I know
-        return next(vid)
+        return next(vid, None)
 
     def get_metadata(self) -> dict[Any, Any]:
         """Returns the YouBit metadata extract from the video description."""
