@@ -2,7 +2,7 @@
 YouBit: using YouTube as a very slow but free file hosting service.
 """
 __title__ = "youbit"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Florian Laporte <florianl@florianl.dev>"
 __license__ = "MIT License"
 

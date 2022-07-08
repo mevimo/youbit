@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "youbit"
-version = "0.1.1"
+version = "0.1.2"
 description = "Host any file on YouTube, for free."
 readme= "README.md"
 authors = ["Florian Laporte <florianl@florianl.dev>"]
