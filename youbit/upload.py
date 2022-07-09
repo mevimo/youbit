@@ -18,6 +18,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import browser_cookie3
 
 
+C_SLEEP_COEFFICIENT = 1
 C_XPATH_UPLOAD_STATUS = (
     "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/"
     "ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span"
@@ -116,7 +117,7 @@ class Uploader:
         :rtype: str
         """
         self.browser.get("https://studio.youtube.com/")
-        time.sleep(1)
+        time.sleep(1*C_SLEEP_COEFFICIENT)
         self.browser.find_element(By.ID, "upload-icon").click()
         self.browser.find_element(By.CSS_SELECTOR, 'input[name="Filedata"]').send_keys(
             str(filepath)
@@ -124,7 +125,7 @@ class Uploader:
         title_element = WebDriverWait(self.browser, timeout=10).until(
             lambda d: d.find_element(By.ID, "textbox")
         )
-        time.sleep(0.5)
+        time.sleep(0.5*C_SLEEP_COEFFICIENT)
         title_element.send_keys(Keys.RETURN)
         title_element.send_keys(title)
 
@@ -141,7 +142,7 @@ class Uploader:
         self.browser.find_element(By.ID, "next-button").click()
         self.browser.find_element(By.ID, "next-button").click()
 
-        time.sleep(0.1)
+        time.sleep(0.1*C_SLEEP_COEFFICIENT)
         self.browser.find_element(By.NAME, "UNLISTED").find_element(
             By.ID, "radioLabel"
         ).click()
@@ -150,17 +151,22 @@ class Uploader:
             return driver.find_element(
                 By.CSS_SELECTOR, ".video-url-fadeable > .ytcp-video-info"
             ).text
-
         video_url = WebDriverWait(self.browser, timeout=20).until(url_not_empty)
 
         status = self.browser.find_element(By.XPATH, C_XPATH_UPLOAD_STATUS)
         while "Uploading" in status.text:
-            time.sleep(0.5)
+            time.sleep(0.5*C_SLEEP_COEFFICIENT)
 
         done_btn = self.browser.find_element(By.ID, "done-button")
         WebDriverWait(self.browser, timeout=20).until(element_to_be_clickable(done_btn))
         done_btn.click()
 
-        time.sleep(0.5)
+        def last_dialog_available(driver):
+            return driver.find_elements(
+                By.CSS_SELECTOR, 'tp-yt-paper-dialog > .header > .header-content > #dialog-title'
+            )
+        WebDriverWait(self.browser, timeout=20).until(last_dialog_available)
+        
+        time.sleep(0.5*C_SLEEP_COEFFICIENT)
         self.browser.quit()
         return video_url

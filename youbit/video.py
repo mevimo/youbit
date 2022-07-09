@@ -149,14 +149,26 @@ class VideoDecoder:
             self.stream.codec_context.height * self.stream.codec_context.width
         )
         # self.stream.thread_type = "AUTO" # seems to not help :(
-        self.stream.codec_context.skip_frame = "NONKEY"  # only reading keyframes
-        self.frames = self.container.decode(self.stream)
-        self.frames = (
-            frame.to_ndarray(format="gray").ravel()
-            for frame in self.frames
-            if (frame.index - 11) % 17  # skipping duplicate keyframes produced
-            # by YouTube re-encoding 1 fps videos as 6fps videos.
-        )
+        if self.stream.codec_context.codec.name == "h264":
+            self.stream.codec_context.skip_frame = "NONKEY"  # only reading keyframes
+            self.frames = self.container.decode(self.stream)
+            self.frames = (
+                frame.to_ndarray(format="gray").ravel()
+                for frame in self.frames
+                if (frame.index - 11) % 17  # skipping duplicate keyframes produced
+                # by YouTube re-encoding 1 fps videos as 6fps videos.
+            )
+        elif self.stream.codec_context.codec.name == "vp9":
+            self.frames = self.container.decode(self.stream)
+            self.frames = islice(self.frames, None, None, 6)
+            self.frames = (
+                frame.to_ndarray(format="gray").ravel()
+                for frame in self.frames
+            )
+        else:
+            raise RuntimeError(
+                f"Unsupported codec: {self.stream.codec_context.codec.name}"
+            )
         if zero_frame:
             # step of 2 if zero_frames were used
             self.frames = islice(self.frames, None, None, 2)

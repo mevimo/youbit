@@ -9,6 +9,7 @@ import base64
 from pathlib import Path
 from typing import Union, Any
 
+import av
 import numpy as np
 
 
@@ -77,3 +78,29 @@ def compare_files(file1: Union[str, Path], file2: Union[str, Path]) -> dict[str,
         "incorrect_indices": (~mask).nonzero()[0],
     }
     return result
+
+
+def analyze_gop(file: Union[str, Path]) -> dict[str, Any]:
+    with av.open(str(file)) as container:
+        stream = container.streams.video[0]
+        closed_gop = stream.codec_context.closed_gop
+        gop_size = stream.codec_context.gop_size
+        frames = container.decode(stream)
+        gops = []
+        gop = []
+        for f in frames:
+            if f.pict_type.value == 1 and gop:
+                gops.append(gop)
+                gop = []
+            gop.append(f.pict_type.name)
+        gops.append(gop)
+        gop_lengths = [len(gop) for gop in gops]
+        total_frames = sum(gop_lengths)
+        return {
+            "total_frames": total_frames,
+            "closed_gop": closed_gop,
+            "gop_size": gop_size,
+            "gop_count": len(gops),
+            "gop_lengths": gop_lengths,
+            "gops": gops
+        }

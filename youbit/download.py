@@ -125,12 +125,6 @@ class Downloader:
             raise StillProcessingError
         usable_formats.sort(reverse=True, key=lambda f: f["vbr"])
         best = usable_formats[0]
-        if best["vcodec"] == "vp9":
-            raise RuntimeError(
-                "This video was encoded using the VP9 codec. "
-                "This might be because the video in question got alot of views. "
-                "YouBit currently cannot decode this properly."
-            )
         if best["vbr"] < 6000:
             warnings.warn(
                 f"A very low video bitrate (vbr) of {best['vbr']} was detected. "
