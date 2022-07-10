@@ -223,7 +223,7 @@ To give you an idea, the default settings will stop working with files larger th
 YouBit has the option to use 'zeroframes'. If enabled, YouBit will interject completely black frames in between real frames when generating the video.
 The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: videos with zero frames have a lower bitrate, but not half. 1080p videos seem to get a bitrate of 7000, compared to the usual 10200.
 
-This is still a useful ~40% effective inrease in effective available bandwidth, leading to less errors and a potentially higher information density.
+This is still a useful ~40% effective inrease in available bandwidth, leading to less errors and a potentially higher information density.
 On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
 <br><br>
 
