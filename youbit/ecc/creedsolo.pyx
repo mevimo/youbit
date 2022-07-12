@@ -197,7 +197,8 @@ def init_tables(prim=0x11d, generator=2, c_exp=8):
 
     # For each possible value in the galois field 2^8, we will pre-compute the logarithm and anti-logarithm (exponential) of this value
     # To do that, we generate the Galois Field F(2^p) by building a list starting with the element 0 followed by the (p-1) successive powers of the generator a : 1, a, a^1, a^2, ..., a^(p-1).
-    x = 1
+    cdef int x = 1
+    cdef int i
     for i in xrange(field_charac): # we could skip index 255 which is equal to index 0 because of modulo: g^255==g^0
         gf_exp[i] = x # compute anti-log for this value and store it in a table
         gf_log[x] = i # compute log at the same time
@@ -377,8 +378,9 @@ def gf_poly_div(dividend, divisor):
 
 def gf_poly_square(poly):
     '''Linear time implementation of polynomial squaring. For details, see paper: "A fast software implementation for arithmetic operations in GF (2n)". De Win, E., Bosselaers, A., Vandenberghe, S., De Gersem, P., & Vandewalle, J. (1996, January). In Advances in Cryptology - Asiacrypt'96 (pp. 65-76). Springer Berlin Heidelberg.'''
-    length = len(poly)
+    cdef int length = len(poly)
     out = bytearray(2*length - 1)
+    cdef int p, k
     for i in xrange(length-1):
         p = poly[i]
         k = 2*i
@@ -387,7 +389,8 @@ def gf_poly_square(poly):
             out[k] = gf_exp[2*gf_log[p]]
         #else: # not necessary since the output is already initialized to an array of 0
             #out[k] = 0
-    out[2*length-2] = gf_exp[2*gf_log[poly[length-1]]]
+    p = poly[length-1]
+    out[2*length-2] = gf_exp[2*gf_log[p]]
     if out[0] == 0: out[0] = 2*poly[1] - 1
     return out
 
