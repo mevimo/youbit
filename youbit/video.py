@@ -167,7 +167,7 @@ class VideoDecoder:
             )
         else:
             raise RuntimeError(
-                f"Unsupported codec: {self.stream.codec_context.codec.name}"
+                f"Video has an unsupported codec: {self.stream.codec_context.codec.name}"
             )
         if zero_frame:
             # step of 2 if zero_frames were used

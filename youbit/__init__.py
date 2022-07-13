@@ -1,8 +1,9 @@
 """
 YouBit: using YouTube as a very slow but free file hosting service.
 """
+from importlib.metadata import version
 __title__ = "youbit"
-__version__ = "0.1.3"
+__version__ = version("youbit")
 __author__ = "Florian Laporte <florianl@florianl.dev>"
 __license__ = "MIT License"
 
