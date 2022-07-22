@@ -52,7 +52,7 @@ python -m youbit download https://youtu.be/dQw4w9WgXcQ
 Output is always saved in the current working directory unless specified otherwise.
 <br><br>
 
-Decode a a local video:
+Decode a local video:
 ```
 python -m youbit decode C:/myvideo.mp4
 ```
