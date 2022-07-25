@@ -195,7 +195,7 @@ class Encoder(TempdirMixin):
             metadata_path = self.tempdir / "metadata.txt"
             with open(metadata_path, "wt") as f:
                 f.write(youbit.util.dict_to_b64(self.metadata))
-            output = directory / ("YOUBIT-" + self.metadata["filename"])
+            output = Path(directory) / ("YOUBIT-" + self.metadata["filename"])
             output = shutil.make_archive(output, "zip", self.tempdir)
             return output
 
