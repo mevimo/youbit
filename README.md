@@ -100,7 +100,7 @@ Using different settings:
 from youbit import Encoder
 
 with Encoder('C:/myfile.txt') as encoder:
-    encoder.encode(ecc=32, bpp=2, zero_frame=True, res='hd', 'crf'=18)
+    encoder.encode(ecc=32, bpp=2, zero_frame=True, res='hd', crf=18)
     url = encoder.upload(browser='chrome')
     print(url)
 ```
