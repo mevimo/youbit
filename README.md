@@ -8,6 +8,9 @@
 <a href="#" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/youbit?color=%2399DDCC" alt="Python versions">
 </a>
+<a href="#" target="_blank">
+    <img src="https://img.shields.io/maintenance/no/2022?color=99ddcc" alt="maintained status">
+</a>
 </p>
 
 <p align="center">
