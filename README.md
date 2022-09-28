@@ -179,7 +179,7 @@ There are 2 reasons. For one, unverified API projects can only upload private vi
 
 Secondly, The YouTube Data API v3 works with a quota system: all interactions with the API have an associated cost. Uploading a video costs a staggering 1600 points, out of 10,000 points that are replenished daily. This would limit the user to a measly 6 uploads per day.
 
-Instead YouBit extract cookies from the browser of choice, to authenticate a [Selenium](https://www.selenium.dev/) headless browser instance where the upload process is automated. This is very hacky, adds alot of overhead and is very sensitive to changes to YouTube's DOM, but it is the best we've got.
+Instead YouBit extracts cookies from the browser of choice, to authenticate a [Selenium](https://www.selenium.dev/) headless browser instance where the upload process is automated. This is very hacky, adds alot of overhead and is very sensitive to changes to YouTube's DOM, but it is the best we've got.
 <br><br>
 
 ## After uploading, how long do I have to wait to download A YouBit video again?
