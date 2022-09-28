@@ -212,7 +212,7 @@ Resolutions higher than 1080p are supported, but should generally not be used. I
 
 
 ## How large can my file be?
-YouBit encodes your files in chunks, so we are not limited by memory, but we are limited by YouTube's maximum video length.
+YouBit encodes your files in chunks, so you are not limited by system memory, but we are limited by YouTube's maximum video length.
 YouTube videos are allowed to be up to 12 hours long, or 128GB, whichever comes first.
 YouBit will raise exceptions during the encoding process if either of these are violated.
 (*If the YouTube account you are using is not verified, the limit is 15 minutes instead. Be sure to verify your account.*)
