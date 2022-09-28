@@ -233,7 +233,7 @@ On higher resolutions however, the use of zero frames seems to be detrimental. U
 
 ## Why not upload lossless videos?
 Compressing the video locally (before YouTube will compress it *again*) might seem like a very bad idea if we want our data to remain intact.
-However, the difference in filesize is very big. And as soon as the encoding process is reasonably effcient, the time it takes to upload the video to YouTube becomes by far the biggest bottleneck. If we carefully control the amount of compressing that we do locally, we can make our video alot smaller (and faster to upload) without affecting data integrity all that much.
+However, the difference in filesize is very big. And as soon as the encoding process is reasonably time efficient, the time it takes to upload the video to YouTube becomes by far the biggest bottleneck. If we carefully control the amount of compressing that we do locally, we can make our video alot smaller (and faster to upload) without affecting data integrity all that much.
 
 That being said, changing the 'crf' option in YouBit allows you to control this variable. It is simply the [Constant Rate Factor](https://slhck.info/video/2017/02/24/crf-guide.html) setting that is passed to the x264 codec.
 <br><br>
