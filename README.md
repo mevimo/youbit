@@ -244,4 +244,4 @@ Unless you know exactly what *all* the options do and how they interact, I would
 Not to say that the defaults settings are the best, they are just the simplest and most reliable.
 You can actually speed up the whole process (encode -> upload -> download -> decode) significantly by using different settings.
 
-For example, setting 'zero_frame' to True allows you to use a 'bpp' of 2, which drastically speeds the whole process, since the resulting video is half the size. 😉
+For example, setting 'zero_frame' to True allows you to use a 'bpp' of 2, which drastically speeds up the whole process, since the resulting video is half the size while still being able to be decoded.
