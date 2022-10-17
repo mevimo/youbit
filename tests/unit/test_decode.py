@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from youbit import decode
+from youbit import transform
 
 
 def test_read_pixels(test_arr):
@@ -39,7 +39,7 @@ def test_read_pixels(test_arr):
     solution_bpp3 = np.load(solution_bpp3)
 
     for bpp in (1, 2, 3):
-        output = decode.read_pixels(test_arr, bpp)
+        output = transform.pixels_to_bytes(test_arr, bpp)
         desired_size = int(test_arr.size / 8) * bpp
         assert output.size == desired_size
         if bpp == 1:

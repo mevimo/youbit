@@ -27,7 +27,7 @@ def test_upload(cmd_browser: str) -> None:
     desc = "unittest_desc"
     uploader = Uploader(cmd_browser)
     test_video = Path(os.getcwd()) / "testdata" / "files" / "test_video.mp4"
-    url = uploader.upload(test_video, title=title, desc=desc)
+    url = uploader.upload(test_video, title=title, description=desc)
     assert url
     request = requests.get(url)
     assert request.status_code == 200

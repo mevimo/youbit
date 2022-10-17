@@ -1,5 +1,5 @@
 """
-This file (test_youbit.py.py) contains unit tests for the youbit.py file.
+This file (test_youbit.py) contains unit tests for the youbit.py file.
 """
 from pathlib import Path
 import os
@@ -33,6 +33,7 @@ def test_youbit_round_trip(cmd_browser, tempdir):
             continue
     if timeout >= 60:
         assert False, "Timeout"
+
     with Decoder(url) as decoder:
         decoder.download()
         decoder.decode(tempdir)

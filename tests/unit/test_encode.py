@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from youbit import encode
+from youbit import transform
 
 
 def test_transform_array(test_arr):
@@ -39,7 +39,7 @@ def test_transform_array(test_arr):
     solution_bpp3 = np.load(solution_bpp3)
 
     for bpp in (1, 2, 3):
-        output = encode.transform_array(test_arr, bpp)
+        output = transform.bytes_to_pixels(test_arr, bpp)
         desired_size = int(test_arr.size * 8 / bpp)
         assert output.size == desired_size
         if bpp == 1:
