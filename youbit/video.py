@@ -109,17 +109,21 @@ class VideoDecoder:
         self.cache = np.empty(0, dtype=np.uint8)
 
     def extract_pixeldata(self, amount_of_pixels: int) -> ndarr_1d_uint8:
-        frame_count = -((amount_of_pixels - self.cache.size) // -self.framesize)
+        """Can return less than the requested amount of pixeldata
+        (down to an empty array) if there is no more data to extract.
+        """
+        frames = []
         if self.cache.size:
-            frames = [self.cache]
+            frames.append(self.cache)
             self.cache = np.empty(0, dtype=np.uint8)
-        else:
-            frames = []
-        for _ in range(frame_count):
+
+        frames_to_extract = -((amount_of_pixels - self.cache.size) // -self.framesize)
+        for _ in range(frames_to_extract):
             try:
                 frames.append(next(self.frames))
             except StopIteration:
                 break
+        
         if len(frames) == 0:
             return np.empty(0, dtype=np.uint8)
         arr = np.concatenate(frames, dtype=np.uint8)

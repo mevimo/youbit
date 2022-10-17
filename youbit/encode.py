@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import gzip
 import shutil
+import os
 from pathlib import Path
 
 from youbit import util
@@ -37,17 +38,24 @@ class Encoder:
     def encode_and_upload(self) -> str:
         with TempDir() as tempdir:
             video_temp_path = tempdir / "video.mp4"
-            self.encode_local(video_temp_path)
+            self._encode(video_temp_path)
             url = self._upload(video_temp_path)
         return url
 
-    def encode_local(self, output_path: Path) -> None:
+    def encode_local(self, output_directory: Path) -> Path:
+        with TempDir() as tempdir:
+            self._encode(tempdir / "video.mp4")
+            output_path = output_directory / ("YOUBIT-" + self.metadata.filename)
+            self._archive_dir_with_readme(tempdir, output_path)
+            return output_path
+
+    def _encode(self, output: Path) -> None:
         tempdir = TempDir()
         zipped_path = tempdir / 'zipped.bin'
         self._zip_file(zipped_path)
 
         video_encoder = VideoEncoder(
-            output = output_path,
+            output = output,
             res = self.settings.resolution.value,
             crf = self.settings.constant_rate_factor,
             zero_frame = self.settings.null_frames,
@@ -66,6 +74,22 @@ class Encoder:
         with open(self.input_file, "rb") as f_in, gzip.open(output_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
 
+    def _archive_dir_with_readme(self, input_directory: TempDir, output: Path) -> Path:
+        """Adds readme to given directory and archives it.
+        """
+        self._add_readme_to(input_directory)
+        output_path = Path(shutil.make_archive(output, "zip", input_directory))
+        return output_path
+
+    def _add_readme_to(self, directory: Path) -> None:
+        """Adds a readme file to the given directory with information
+        about manual upload."""
+        from_path = Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
+        to_path = directory / "README.txt"
+        shutil.copy(from_path, to_path)
+        with open(to_path, "at") as readme:
+            readme.write(self.metadata.export_as_base64())
+
     def _read_chunks(self, file: Path) -> bytes:
         chunk_size = (255 - self.settings.ecc_symbols) * self.C_CHUNK_SIZE_FACTOR
         with open(file, "rb") as f:
@@ -83,26 +107,3 @@ class Encoder:
             description = self.metadata.export_as_base64()
         )
         return url
-
-
-
-## ALTERNATIVELY:
-# input_file would need to either
-    # a) not be checked at all
-    # b) be checked by both functions encode_and_upload and encode_local
-    # c) be put into a seperate function  <----
-
-def encode_and_upload(input_file: Path, settings: Settings) -> str:
-    ...
-
-def encode_local(input_file: Path, output_path: Path, settings: Settings = Settings()) -> None:
-    ...
-
-def _zip_file(input_file: Path, output_file: Path) -> None:
-    ...
-
-def _read_chunks(file: Path) -> bytes:
-    ...
-
-def _upload(input_file: Path, settings: Settings) -> str:
-    ...

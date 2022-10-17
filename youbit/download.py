@@ -36,7 +36,7 @@ class Downloader:
         ytdl_options.update({
             "paths": {"home": str(output)},
             "format": self._format_selector,
-            "outtmpl": "E:\\dev\\test\\poop"
+            "outtmpl": str(output)
         })
         
         with open(os.devnull, "w") as devnull, redirect_stderr(devnull):

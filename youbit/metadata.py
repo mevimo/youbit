@@ -41,7 +41,7 @@ class Metadata:
         return self._settings
 
     @settings.setter
-    def settings(self, value) -> None:
+    def settings(self, value: Optional[Settings]) -> None:
         if not isinstance(value, Settings) and value is not None:
             raise ValueError("Value must be a Settings object.")
         self._settings = value

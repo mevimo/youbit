@@ -1,9 +1,7 @@
 YOUBIT MANUAL UPLOAD:
 
+    1) Upload the 'video.mp4' file in this archive to YouTube.
 
-    - Upload the 'video.mp4' file in this archive to YouTube.
+    2) Title can be anything you want.
 
-    - Title can be anything you want.
-
-    - Copy and paste the contents of 'metadata.txt' into the DESCRIPTION of the video.
-        Place nothing else in the description.
+    3) Place the following base64 string, and nothing else, in the video description: 
