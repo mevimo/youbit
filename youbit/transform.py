@@ -18,9 +18,11 @@ C_PIXEL_MAPPINGS = {
 
 
 def bytes_to_pixels(input_data: Union[ndarr_1d_uint8, bytes], bpp: BitsPerPixel) -> ndarr_1d_uint8:
-    """Transforms binary data into a uint8 numpy array
-    representing 8 bit greyscale pixels in a YouBit video.
-    Beware, can add empty bytes to input.
+    """Transforms binary data into a uint8 numpy array representing 8 bit
+    greyscale pixels for a YouBit video.
+    BEWARE: when the input has a length that is not a factor of 8, this function
+    might append nulls to make it so. You should only let this happen at the very
+    end of a file's binary data, NOT in the middle of it.
     """
     if isinstance(input_data, bytes):
         input_data: ndarr_1d_uint8 = np.frombuffer(input_data, dtype=np.uint8)

@@ -19,8 +19,6 @@ from youbit.video import VideoEncoder
 
 
 class Encoder:
-    C_CHUNK_SIZE_FACTOR = 100000
-
     def __init__(self, input_file: Path, settings: Settings = Settings()) -> None:
         if not input_file.exists() or not input_file.is_file():
             raise ValueError(
@@ -91,7 +89,7 @@ class Encoder:
             readme.write(self.metadata.export_as_base64())
 
     def _read_chunks(self, file: Path) -> bytes:
-        chunk_size = (255 - self.settings.ecc_symbols) * self.C_CHUNK_SIZE_FACTOR
+        chunk_size = (255 - self.settings.ecc_symbols) * 100000
         with open(file, "rb") as f:
             while True:
                 binary_data = f.read(chunk_size)

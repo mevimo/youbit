@@ -8,10 +8,11 @@ from youbit.settings import BitsPerPixel
 def pixels_to_bytes(arr: ndarr_1d_uint8, bpp: BitsPerPixel) -> ndarr_1d_uint8:
     """Reverses the bytes_to_pixels() function.
     Reads pixel values and returns the original binary.
+    Array length must be a factor of 8!
     """
     if arr.size % 8:
         raise ValueError(
-            f"The length of the given array ({arr.size}) must be a factor of 8."
+            f"The length of the given array ({arr.size}) is not a factor of 8."
         )
     
     sub_functions = {
