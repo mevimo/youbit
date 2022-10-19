@@ -3,7 +3,7 @@ Houses the VideoEncoder and VideoDecoder class, to encode arrays into
 YouBit video's and decode those back into arrays respectively.
 """
 from pathlib import Path
-from typing import Any, Union, Generator
+from typing import Any, Generator
 import warnings
 from itertools import islice
 
@@ -126,8 +126,8 @@ class VideoDecoder:
         
         if len(frames) == 0:
             return np.empty(0, dtype=np.uint8)
-        arr = np.concatenate(frames, dtype=np.uint8)
 
+        arr = np.concatenate(frames, dtype=np.uint8)
         if arr.size > amount_of_pixels:
             surplus = arr.size - amount_of_pixels
             self.cache = arr[-surplus:]

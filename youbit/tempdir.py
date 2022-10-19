@@ -1,4 +1,4 @@
-from typing import Any
+from __future__ import annotations
 from pathlib import Path
 from atexit import register
 from signal import signal, SIGTERM, SIGINT
@@ -19,7 +19,7 @@ class TempDir:
         except FileNotFoundError:
             pass
 
-    def __enter__(self) -> Any:
+    def __enter__(self) -> TempDir:
         return self
 
     def __exit__(self, *args: str, **kwargs: str) -> None:

@@ -1,5 +1,5 @@
 """
-This file (test_youbit.py) contains unit tests for the youbit.py file.
+This file (test_youbit.py) contains unit tests for the encode.py and decode.py files.
 """
 from pathlib import Path
 import os
@@ -8,32 +8,35 @@ import time
 from yt_dlp.utils import DownloadError
 
 from tests.conftest import uploads
-from youbit import Encoder, Decoder
-from youbit.download import StillProcessingError
+from youbit import Encoder, download_and_decode
+from youbit.settings import Settings, Browser
+from youbit.download import Downloader
+from youbit.util import get_md5
 
 
 @uploads
-def test_youbit_round_trip(cmd_browser, tempdir):
+def test_youbit_round_trip(cmd_browser: Browser, tempdir: Path):
     test_file = Path(os.getcwd()) / "testdata" / "files" / "test_file.jpg"
-    with Encoder(test_file) as encoder:
-        encoder.encode()
-        url = encoder.upload(cmd_browser, title="unittest: test_youbit_round_trip")
+    encoder = Encoder(test_file, Settings(browser=cmd_browser))
+    url = encoder.encode_and_upload()
     time.sleep(
         10
     )  # YouTube needs time to process the video before we can download the correct resolution
     timeout = 0
     while timeout < 60:
         try:
-            with Decoder(url) as decoder:
-                if decoder.downloader.best_vbr > 6000:
-                    break
-        except (StillProcessingError, DownloadError):
+            downloader = Downloader(url)
+            if downloader.best_vbr > 6000:
+                break
+        except DownloadError:
             time.sleep(5)
             timeout += 5
             continue
     if timeout >= 60:
         assert False, "Timeout"
 
-    with Decoder(url) as decoder:
-        decoder.download()
-        decoder.decode(tempdir)
+    output_path = download_and_decode(url, tempdir)
+    original_md5 = get_md5(test_file)
+    output_md5 = get_md5(output_path)
+    assert original_md5 == output_md5
+    

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from youbit.types import ndarr_1d_uint8
+from youbit.settings import Browser
 
 
 uploads = pytest.mark.skipif(
@@ -53,5 +54,14 @@ def pytest_addoption(parser: Any) -> None:
 
 
 @pytest.fixture
-def cmd_browser(request: Any) -> Any:
-    return request.config.getoption("--browser")
+def cmd_browser(request: Any) -> Browser:
+    browser_str = request.config.getoption("--browser")
+    browsers = {
+        'chrome': Browser.CHROME,
+        'firefox': Browser.FIREFOX,
+        'opera': Browser.OPERA,
+        'brave': Browser.BRAVE,
+        'chromium': Browser.CHROMIUM,
+        'edge': Browser.EDGE
+    }
+    return browsers[browser_str]

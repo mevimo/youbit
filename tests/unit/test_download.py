@@ -4,6 +4,8 @@ This file (test_download.py) contains unit tests for the download.py file.
 from youbit.download import Downloader
 from tests.conftest import long
 
+#! has to be redone by changing description of old video
+
 
 C_TEST_VIDEO_URL = "https://www.youtube.com/watch?v=dnhlx48t-h4"
 C_TEST_VIDEO_METADATA = {
@@ -18,7 +20,7 @@ C_TEST_VIDEO_METADATA = {
 
 @long
 def test_download(tempdir):
-    """WHEN we use a youbit.download.Downloader object to downlaod a YouTube video.
+    """WHEN we use a Downloader object to download a YouTube video.
     THEN check if download succeeds and extracted metadata is correct.
     """
     downloader = Downloader(C_TEST_VIDEO_URL)

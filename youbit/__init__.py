@@ -8,8 +8,8 @@ __author__ = "Florian Laporte <florianl@florianl.dev>"
 __license__ = "MIT License"
 
 from .encode import Encoder
-# from .decode import 
-from .settings import Settings
+from .decode import download_and_decode, decode_local
+from .settings import Settings, Browser
 from .metadata import Metadata
 from . import transform
 from . import detransform
@@ -20,14 +20,10 @@ from . import download
 from .ecc import ecc
 
 
-# __all__ = [
-#     "Encoder",
-#     "Decoder",
-#     "encode",
-#     "decode",
-#     "download",
-#     "upload",
-#     "video",
-#     "util",
-#     "ecc"
-# ]
+__all__ = [
+    "Encoder",
+    "download_and_decode",
+    "decode_local",
+    "Settings",
+    "Metadata"
+]

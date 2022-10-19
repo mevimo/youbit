@@ -26,7 +26,7 @@ def pixels_to_bytes(arr: ndarr_1d_uint8, bpp: BitsPerPixel) -> ndarr_1d_uint8:
 
 
 def _detransform_bpp1(arr: ndarr_1d_uint8) -> ndarr_1d_uint8:
-    output = np.zeros(arr.size, dtype=np.uint)
+    output = np.zeros(arr.size, dtype=np.uint8)
     _detransform_bpp1_subfunc(arr, output)
     array_of_bytes = np.packbits(output)
     return array_of_bytes

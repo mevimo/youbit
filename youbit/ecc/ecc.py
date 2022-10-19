@@ -14,7 +14,7 @@ def apply_ecc(data: bytes, ecc_symbols: Annotated[int, '0 < x < 255']) -> bytes:
     """
     if mod := len(data) % (255 - ecc_symbols):
         bytes_needed = (255 - ecc_symbols) - mod
-        _add_trailing_bytes(bytes_needed)
+        _add_trailing_bytes(data, bytes_needed)
 
     return RSCodec(ecc_symbols).encode(data)  # type: ignore
 
@@ -27,9 +27,7 @@ def _add_trailing_bytes(data: bytes, byte_count: int) -> None:
 
 def remove_ecc(data: bytes, ecc_symbols_used: Annotated[int, '0 < x < 255']) -> bytes:
     """Removes error correction from bytes object.
-    Only apply to bytes objects whose lengths are a factor of 255!
-    """
-    if len(data) % 255:
-        raise ValueError("Input data's length should be a factor of 8!")
-        
+    BEWARE: if processing data in chunks, only pass data with a length
+    that is a factor of 255, with the exception of the very last chunk!
+    """        
     return RSCodec(ecc_symbols_used).decode(data)[0]  # type: ignore
