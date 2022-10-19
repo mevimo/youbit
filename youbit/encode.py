@@ -88,7 +88,9 @@ class Encoder:
             readme.write(self._metadata.export_as_base64())
 
     def _read_chunks(self, file: Path) -> bytes:
-        chunk_size = (255 - self._settings.ecc_symbols) * 100_000
+        """Reads the input file in PROPERLY SIZED chunks, returning it in bytes.
+        This bytes object thus has a length that is a factor of (255 - ecc_symbols)!"""
+        chunk_size = (255 - self._settings.ecc_symbols) * 100_000  # See apply_ecc()
         with open(file, "rb") as f:
             while True:
                 binary_data = f.read(chunk_size)

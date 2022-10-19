@@ -48,7 +48,7 @@ def decode_local(
             if not pixeldata_arr.size:
                 break
             bytes_arr = pixels_to_bytes(pixeldata_arr, settings.bits_per_pixel)
-            if metadata.settings.ecc_symbols:
+            if settings.ecc_symbols:
                 bytes_arr = remove_ecc(
                     bytes_arr.tobytes(), 
                     settings.ecc_symbols
