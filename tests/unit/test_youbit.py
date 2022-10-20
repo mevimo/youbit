@@ -14,10 +14,14 @@ from youbit.download import Downloader
 from youbit.util import get_md5
 
 
+
+
+from youbit import TempDir
+
 @uploads
-def test_youbit_round_trip(cmd_browser: Browser, tempdir: Path):
-    test_file = Path(os.getcwd()) / "testdata" / "files" / "test_file.jpg"
-    encoder = Encoder(test_file, Settings(browser=cmd_browser))
+def test_youbit_round_trip(browser: Browser, tempdir: Path):
+    test_file = Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_file.jpg"
+    encoder = Encoder(test_file, Settings(browser=browser))
     url = encoder.encode_and_upload()
     time.sleep(
         10
@@ -40,3 +44,8 @@ def test_youbit_round_trip(cmd_browser: Browser, tempdir: Path):
     output_md5 = get_md5(output_path)
     assert original_md5 == output_md5
     
+
+if __name__ == "__main__":
+    tempdir = TempDir()
+    test_youbit_round_trip(Browser.FIREFOX, tempdir.path)
+    tempdir.close()

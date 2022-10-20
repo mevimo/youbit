@@ -10,11 +10,11 @@ from youbit.settings import Browser
 from tests.conftest import uploads
 
 
-C_TEST_VIDEO_PATH = Path(os.getcwd()) / "testdata" / "files" / "test_video.mp4"
+C_TEST_VIDEO_PATH = Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_video.mp4"
 
 
 @uploads
-def test_upload(cmd_browser: Browser) -> None:
+def test_upload(browser: Browser) -> None:
     """WHEN we use a youbit.uploader.Uploader object to upload a video.
     THEN verify if returned URL is valid, and title and description were set
     appropriately.
@@ -28,7 +28,7 @@ def test_upload(cmd_browser: Browser) -> None:
     """
     title = "unittest_title"
     desc = "unittest_desc"
-    uploader = Uploader(cmd_browser)
+    uploader = Uploader(browser)
     url = uploader.upload(C_TEST_VIDEO_PATH, title=title, description=desc)
     assert url
     request = requests.get(url)

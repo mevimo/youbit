@@ -10,9 +10,6 @@ def test_settings_creation():
     settings = Settings()
     assert settings
 
-def test_settings_creation_failure():
-    with pytest.raises(TypeError):
-        Settings("Should not accept arguments")
 
 def test_setters_valid_settings():
     settings = Settings()
@@ -39,3 +36,16 @@ def test_setters_invalid_settings():
         settings.null_frames = "Should be boolean"
     with pytest.raises(ValueError):
         settings.browser = "Should be Browser object"
+
+
+def test_eq_true() -> None:
+    settings1, settings2 = Settings(), Settings()
+    settings1.ecc_symbols = 99
+    settings2.ecc_symbols = 99
+    assert settings1 == settings2
+
+
+def test_eq_false() -> None:
+    settings1, settings2 = Settings(), Settings()
+    settings2.ecc_symbols = 99
+    assert not settings1 == settings2

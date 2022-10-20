@@ -17,7 +17,7 @@ def test_bytes_to_pixels(test_arr: ndarr_1d_uint8) -> None:
     AND equal to a precalculated and validated array.
     """
     solution_bpp1 = (
-        Path(os.getcwd())
+        Path(os.path.dirname(__file__))
         / "testdata"
         / "solutions"
         / "test_transform_array_solution_bpp1.npy"
@@ -25,7 +25,7 @@ def test_bytes_to_pixels(test_arr: ndarr_1d_uint8) -> None:
     solution_bpp1 = np.load(solution_bpp1)
 
     solution_bpp2 = (
-        Path(os.getcwd())
+        Path(os.path.dirname(__file__))
         / "testdata"
         / "solutions"
         / "test_transform_array_solution_bpp2.npy"
@@ -33,7 +33,7 @@ def test_bytes_to_pixels(test_arr: ndarr_1d_uint8) -> None:
     solution_bpp2 = np.load(solution_bpp2)
 
     solution_bpp3 = (
-        Path(os.getcwd())
+        Path(os.path.dirname(__file__))
         / "testdata"
         / "solutions"
         / "test_transform_array_solution_bpp3.npy"

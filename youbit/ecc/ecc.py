@@ -9,7 +9,7 @@ from youbit.ecc.creedsolo import RSCodec
 
 def apply_ecc(data: Union[bytes, bytearray], ecc_symbols: Annotated[int, '0 < x < 255']) -> bytearray:
     """Encodes a bytes object using reed-solomon error correction. Galois field is GF(256).
-    BEWARE: nulls (zeros) will be added to the input if it is not a factor of
+    BEWARE: nulls (zeros) can be added if the input is not a factor of
     (255 - {ecc_symbols})!
     This is only acceptable at the very end of a file.
     """

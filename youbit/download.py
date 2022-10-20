@@ -26,8 +26,9 @@ class Downloader:
     @property
     def best_vbr(self) -> float:
         """Highest video bitrate that youbit can use, in Kbps."""
-        best_format = next(self._format_selector(self.video_metadata))
-        if not best_format:
+        try:
+            best_format = next(self._format_selector(self.video_metadata))
+        except StopIteration:
             return 0
         return best_format.get("vbr")
 
@@ -52,7 +53,7 @@ class Downloader:
     def _format_selector(self, ctx: dict) -> Optional[dict]:
         """Custom format selector for yt_dlp.
         Returns the format with the highest bitrate and correct resolution, or None.
-        Needs to be a generator for yt_dlp.
+        NEEDS to be a generator for yt_dlp...
         """
         resolution: tuple = self.youbit_metadata.settings.resolution.value
         resolution_str = f"{resolution[0]}x{resolution[1]}"
