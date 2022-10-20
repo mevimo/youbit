@@ -73,56 +73,52 @@ python -m youbit encode C:/myfile.txt
 Alternatively, the Python API can be used directly:
 ```py
 from youbit import Encoder
+from youbit.settings import Settings, Browser
 
-with Encoder('C:/myfile.txt') as encoder:
-    encoder.encode()
-    url = encoder.upload(browser='opera')  # Extract cookies from Opera browser
-    print(url)
+settings = Settings(browser=Browser.CHROME)
+encoder = Encoder('C:/myfile.txt', settings)
+url = encoder.encode_and_upload()
 ```
 
 ```py
-from youbit import Decoder
+from youbit import download_and_decode
 
-with Decoder('https://youtu.be/dQw4w9WgXcQ') as decoder:
-    decoder.download()
-    path = decoder.decode('C:/mydirectory/')  # Save output in 'C:/mydirectory'. Defaults to current working directory.
-    print(path)
+filepath = download_and_decode('https://youtu.be/dQw4w9WgXcQ', 'C:/mydir/')
 ```
 
 Encode without upload:
 ```py
 from youbit import Encoder
 
-with Encoder('C:/myfile.txt') as encoder:
-    path = encoder.encode('C:/mydirectory/')  # Saves output in 'C:/mydirectory'. Defaults to current working directory.
-    print(path)
+encoder = Encoder('C:/myfile.txt')
+filepath = encoder.encode_local('C:/mydirectory/')
 ```
 
-Using different settings:
+Changing encoder settings:
 ```py
 from youbit import Encoder
+from youbit.settings import Settings, Resolution, BitsPerPixel
 
-with Encoder('C:/myfile.txt') as encoder:
-    encoder.encode(ecc=32, bpp=2, zero_frame=True, res='hd', crf=18)
-    url = encoder.upload(browser='chrome')
-    print(url)
+settings = Settings()  # sensible defaults if left untouched
+settings.resolution = Resolution.QHD
+settings.bits_per_pixel = BitsPerPixel.TWO
+settings.ecc_symbols = 69
+settings.constant_rate_factor = 20
+settings.null_frames = True
+
+encoder = Encoder('C:/myfile.txt', my_settings)
 ```
 
-Decode local file:
+Decoding a *local* file a little trickier. You must know the settings that were used during the encoding process in order to succesfully decode it.
+You do this by passing a Metadata object to the decoding function. Your YouBit videos should have a base64 encoded string as their description.
+This string can be used to instantiate the correct associated Metadata object.
 ```py
-from youbit import Decoder
+from youbit import decode_local, Metadata
 
-with Decoder('C:/myvideo.mp4') as decoder:
-    path = decoder.decode(
-        'C:/mydirectory/',  # Save output in 'C:/mydirectory'. Defaults to current working directory.
-        ecc = 32,  # The 'ecc' value that was used during encoding.
-        bpp = 1,  # The 'bpp' value that was used during encoding.
-        zero_frame = False  # Whether or not 'zero frames' were used during encoding.
-    )
-    print(path)
+metadata = Metadata.create_from_base64(VIDEO_DESCRIPTION_STRING)
+
+filepath = decode_local('decode_me.mp4', 'C:/documents/', metadata)
 ```
-**NOTE**: 'ecc', 'bpp' and 'zero_frame' are 3 pieces of metadata that need to be known to decode a YouBit video.
-When YouBit handles the download, it extracts this metadata from the comments of the video automatically.
 
 <br><br>
 
@@ -153,13 +149,15 @@ It's just a very fun concept to explore :)
 Because [chroma subsampling](https://en.wikipedia.org/wiki/Chroma_subsampling) will compress away color information with extreme prejudice. So instead we save all our information in the luminance channel only. This results in greyscale videos, and works much better. It coincidentally makes the encoding and decoding process less complex as well.
 <br><br>
 
-## What is 'bpp'?
-It stands for 'Bits Per Pixel' and, as you might have guessed, dictates how many bits of information are saved in a single pixel of video. A higher bpp allows for a higher information density - a smaller output video in comparison to the original file.
+## What is "Bits Per Pixel" (BPP)?
+As you might have guessed, BitsPerPixel is a settings that dictates how many bits of information will be saved in a single pixel of video. A higher BPP allows for a higher information density - a smaller output video in comparison to the original file.
 However, it also introduces more corrupt pixels.
 
-A bpp of 1 means each pixel only has 2 states, 1 and 0, on and off, white and black. This means our greyscale pixels have a value of either 255 (white) or 0 (black). During decoding, YouBit treats anything 128 or more as a 1, and everything below 128 as a 0. This means YouTube's compression needs to change a pixel's value by at least 127 for it to become corrupt.
+A BPP of 1 means each pixel only has 2 states, 1 and 0, on and off, white and black. This means our greyscale pixels have a value of either 255 (white) or 0 (black). During decoding, YouBit treats anything 128 or more as a 1, and everything below 128 as a 0. This means YouTube's compression needs to change a pixel's value by at least 127 for it to become corrupt.
 
-Now consider a bpp of 2. Two bits have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0,85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel. Our video will be half the size, but easier to corrupt when YouTube re-encodes it during upload.
+Now consider a BPP of 2. Two bits have 4 possible states (00,01,10,11). So to represent 2 bits, our pixels need to have 4 possible states as well. Something like (0,85,170,255). The distance between these is now smaller: a change of only 43 is now required to corrupt the pixel. Our video will be half the size, but easier to corrupt when YouTube re-encodes it during upload.
+
+The default settings use a BPP of 1. A BPP of 2 is possible, and 3 is experimental.
 <br><br>
 
 ## Why a framerate of 1?
@@ -222,12 +220,13 @@ To give you an idea, the default settings will stop working with files larger th
 <br><br>
 
 
-## What is a 'zero frame'?
-YouBit has the option to use 'zeroframes'. If enabled, YouBit will interject completely black frames in between real frames when generating the video.
-The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the bandwidth per actual data-holding frame. In practice, this only works a little: videos with zero frames have a lower bitrate, but not half. 1080p videos seem to get a bitrate of 7000, compared to the usual 10200.
+## What is a 'null frame'?
+YouBit has the option to use 'null frames'. If enabled, YouBit will interject completely black frames in between 'real' frames when generating the video.
+The idea is that YouTube will still allocate the same bitrate, but since the video is twice as long and all-black frames can be compressed away almost entirely, we will have twice the effective bandwidth per actual data-holding frame. In practice, this only works a little: videos with zero frames have a lower bitrate, but not half. 1080p videos seem to get a bitrate of 7000, compared to the usual 10200.
 
 This is still a useful ~40% effective inrease in available bandwidth, leading to less errors and a potentially higher information density.
-On higher resolutions however, the use of zero frames seems to be detrimental. Use at your own discretion.
+On higher resolutions however, the use of zero frames seems to be detrimental. The default settings forego using null frames.
+Use at your own discretion.
 <br><br>
 
 
@@ -244,4 +243,4 @@ Unless you know exactly what *all* the options do and how they interact, I would
 Not to say that the defaults settings are the best, they are just the simplest and most reliable.
 You can actually speed up the whole process (encode -> upload -> download -> decode) significantly by using different settings.
 
-For example, setting 'zero_frame' to True allows you to use a 'bpp' of 2, which drastically speeds up the whole process, since the resulting video is half the size while still being able to be decoded.
+For example, setting 'null_frames' to True allows you to use a 'BitsPerPixel' of 2, which drastically speeds up the whole process, since the resulting video is half the size while still being able to be succesfully decoded.
