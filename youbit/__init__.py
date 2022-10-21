@@ -9,10 +9,10 @@ __license__ = "MIT License"
 
 from .encode import Encoder
 from .decode import download_and_decode, decode_local
-from .settings import Settings, Browser, BitsPerPixel
 from .metadata import Metadata
 from .upload import Uploader
 from .download import Downloader
+from . import settings
 from . import transform
 from . import detransform
 from . import util
