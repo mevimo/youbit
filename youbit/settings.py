@@ -15,7 +15,7 @@ class BitsPerPixel(Enum):
     THREE = 3
 
 
-class Browser(Enum):
+class Browser(str, Enum):
     CHROME = auto()
     FIREFOX = auto()
     OPERA = auto()
@@ -26,8 +26,14 @@ class Browser(Enum):
 
 @dataclass
 class Settings:
-    def __init__(
-        self,
+    resolution: Resolution = Resolution.HD,
+    bits_per_pixel: BitsPerPixel = BitsPerPixel.ONE,
+    ecc_symbols: int = 32,
+    constant_rate_factor: int = 18,
+    null_frames: bool = False,
+    browser: Optional[Browser] = None
+    
+    def __init__(self,
         resolution: Resolution = Resolution.HD,
         bits_per_pixel: BitsPerPixel = BitsPerPixel.ONE,
         ecc_symbols: int = 32,
@@ -101,16 +107,3 @@ class Settings:
         if not isinstance(value, Browser) and value is not None:
             raise ValueError("Value must be a Browser or None.")
         self._browser = value
-
-    def __eq__(self, other: Any) -> bool:
-        if (
-            isinstance(other, type(self)) and
-            other.resolution == self.resolution and
-            other.bits_per_pixel == self.bits_per_pixel and
-            other.ecc_symbols == self.ecc_symbols and
-            other.constant_rate_factor == self.constant_rate_factor and
-            other.null_frames == self.null_frames and
-            other.browser == self.browser
-        ):
-            return True
-        return False

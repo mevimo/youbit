@@ -3,7 +3,9 @@ This file (test_download.py) contains unit tests for the download.py file.
 """
 from pathlib import Path
 
-from youbit import Downloader, Settings, Metadata
+from youbit import Downloader, Metadata
+from youbit.settings import Settings
+
 from tests.conftest import long
 
 

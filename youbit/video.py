@@ -145,7 +145,7 @@ class VideoDecoder:
             )
         elif self.stream.codec_context.codec.name == "vp9":
             frames = self.container.decode(self.stream)
-            frames = islice(self.frames, None, None, 6)
+            frames = islice(frames, None, None, 6)
             frame_generator = (
                 frame.to_ndarray(format="gray").ravel()
                 for frame in frames

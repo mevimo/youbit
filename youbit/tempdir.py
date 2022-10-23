@@ -14,6 +14,7 @@ class TempDir:
         signal(SIGINT, self.close)
 
     def close(self) -> None:
+        print('close')
         try:
             rmtree(self.path)
         except FileNotFoundError:

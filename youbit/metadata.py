@@ -3,21 +3,26 @@ import base64
 import pickle
 from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Optional, Any
+from typing import Optional
 
 from youbit.settings import Settings
 
 
 @dataclass
 class Metadata:
+    _settings: Optional[Settings] = None
+    filename: Optional[str] = None
+    md5_hash: Optional[str] = None 
+    youbit_version: str = version("youbit")
+
     def __init__(self,
+        settings: Optional[Settings] = None,
         filename: Optional[str] = None,
-        md5_hash: Optional[str] = None,
-        settings: Optional[Settings] = None
+        md5_hash: Optional[str] = None
     ) -> None:
+        self.settings = settings
         self.filename = filename
         self.md5_hash = md5_hash
-        self.settings = settings
         self.youbit_version = version("youbit")
 
     @staticmethod
@@ -45,14 +50,3 @@ class Metadata:
         if not isinstance(value, Settings) and value is not None:
             raise ValueError("Value must be a Settings object.")
         self._settings = value
-
-    def __eq__(self, other: Any) -> bool:
-        if (
-            isinstance(other, type(self)) and
-            other.filename == self.filename and
-            other.md5_hash == self.md5_hash and
-            other.settings == self.settings and
-            other.youbit_version == self.youbit_version
-        ):
-            return True
-        return False

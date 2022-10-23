@@ -14,10 +14,6 @@ from youbit.download import Downloader
 from youbit.util import get_md5
 
 
-
-
-from youbit import TempDir
-
 @uploads
 def test_youbit_round_trip(browser: Browser, tempdir: Path):
     test_file = Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_file.jpg"
@@ -43,9 +39,3 @@ def test_youbit_round_trip(browser: Browser, tempdir: Path):
     original_md5 = get_md5(test_file)
     output_md5 = get_md5(output_path)
     assert original_md5 == output_md5
-    
-
-if __name__ == "__main__":
-    tempdir = TempDir()
-    test_youbit_round_trip(Browser.FIREFOX, tempdir.path)
-    tempdir.close()
