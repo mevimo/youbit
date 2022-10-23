@@ -43,7 +43,7 @@ def test_bytes_to_pixels(test_arr: ndarr_1d_uint8) -> None:
     solutions = {
         BitsPerPixel.ONE: solution_bpp1,
         BitsPerPixel.TWO: solution_bpp2,
-        BitsPerPixel.THREE: solution_bpp3
+        BitsPerPixel.THREE: solution_bpp3,
     }
 
     for bpp in BitsPerPixel:

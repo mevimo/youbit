@@ -85,7 +85,7 @@ class Uploader:
             Browser.OPERA: browser_cookie3.opera,
             Browser.EDGE: browser_cookie3.edge,
             Browser.CHROMIUM: browser_cookie3.chromium,
-            Browser.BRAVE: browser_cookie3.brave
+            Browser.BRAVE: browser_cookie3.brave,
         }
         cookiejar = supported_browsers[browser]()
 
@@ -141,6 +141,7 @@ class Uploader:
             return driver.find_element(
                 By.CSS_SELECTOR, ".video-url-fadeable > .ytcp-video-info"
             ).text
+
         video_url = WebDriverWait(self.browser, timeout=20).until(url_not_empty)
         return video_url
 
@@ -157,12 +158,14 @@ class Uploader:
     def _wait_until_last_dialog_available(self) -> None:
         def last_dialog_available(driver: WebDriver):
             return driver.find_elements(
-                By.CSS_SELECTOR, 'tp-yt-paper-dialog > .header > .header-content > #dialog-title'
+                By.CSS_SELECTOR,
+                "tp-yt-paper-dialog > .header > .header-content > #dialog-title",
             )
+
         WebDriverWait(self.browser, timeout=20).until(last_dialog_available)
 
     def _sleep_short(self) -> None:
-        time.sleep(0.5*C_SLEEP_COEFFICIENT)
+        time.sleep(0.5 * C_SLEEP_COEFFICIENT)
 
     def _sleep_long(self) -> None:
-        time.sleep(1*C_SLEEP_COEFFICIENT)
+        time.sleep(1 * C_SLEEP_COEFFICIENT)

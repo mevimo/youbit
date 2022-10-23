@@ -13,9 +13,7 @@ from youbit.types import ndarr_1d_uint8
 from youbit import util
 
 
-# C_TEST_VIDEO_ENCODE_MD5_SOLUTION = "0dd13976862d4c1a5a5109c2825b8463"
 C_TEST_VIDEO_ENCODE_MD5_SOLUTION = "537c69a0463b226967cdd40e1c32e506"
-
 
 
 def test_video_encoder(tempdir: Path, test_arr: ndarr_1d_uint8) -> None:
@@ -23,7 +21,7 @@ def test_video_encoder(tempdir: Path, test_arr: ndarr_1d_uint8) -> None:
     output_path = tempdir / desired_filename
     with VideoEncoder(output_path, Settings()) as encoder:
         encoder.feed(test_arr)
-    
+
     assert (
         util.get_md5(output_path) == C_TEST_VIDEO_ENCODE_MD5_SOLUTION
     )  # Compare MD5 checksum to md5 checksum of pre-computed and verified file.

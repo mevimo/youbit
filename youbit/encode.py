@@ -1,7 +1,7 @@
 """
 The main API of YouBit.
 """
-from __future__ import annotations 
+from __future__ import annotations
 from typing import Union
 import gzip
 import shutil
@@ -19,19 +19,21 @@ from youbit.video import VideoEncoder
 
 
 class Encoder:
-    def __init__(self, input_file: Union[Path, str], settings: Settings = Settings()) -> None:
+    def __init__(
+        self, input_file: Union[Path, str], settings: Settings = Settings()
+    ) -> None:
         input_file = Path(input_file)
         if not input_file.exists() or not input_file.is_file():
             raise ValueError(
                 f"Invalid input argument '{input_file}'. Must be a valid file location."
             )
-        
+
         self._input_file = input_file
         self._settings = settings
         self._metadata = Metadata(
-            filename = str(self._input_file.name),
-            md5_hash = util.get_md5(self._input_file),
-            settings = self._settings
+            filename=str(self._input_file.name),
+            md5_hash=util.get_md5(self._input_file),
+            settings=self._settings,
         )
 
     def encode_and_upload(self) -> str:
@@ -45,7 +47,7 @@ class Encoder:
         output_dir = Path(output_dir)
         if not output_dir.exists() or not output_dir.is_dir():
             raise ValueError(f"'{output_dir}' is not a valid directory.")
-    
+
         with TempDir() as tempdir:
             self._encode(tempdir.path / "video.mp4")
             output_path = output_dir / ("YOUBIT-" + self._metadata.filename)
@@ -54,7 +56,7 @@ class Encoder:
 
     def _encode(self, output: Path) -> None:
         tempdir = TempDir()
-        zipped_path = tempdir.path / 'zipped.bin'
+        zipped_path = tempdir.path / "zipped.bin"
         self._zip_file(zipped_path)
 
         video_encoder = VideoEncoder(output, self._settings)
@@ -68,12 +70,13 @@ class Encoder:
         tempdir.close()
 
     def _zip_file(self, output_path: Path) -> None:
-        with open(self._input_file, "rb") as f_in, gzip.open(output_path, "wb") as f_out:
+        with open(self._input_file, "rb") as f_in, gzip.open(
+            output_path, "wb"
+        ) as f_out:
             shutil.copyfileobj(f_in, f_out)
 
     def _archive_dir_with_readme(self, input_directory: Path, output: Path) -> Path:
-        """Adds readme to given directory and archives its contens.
-        """
+        """Adds readme to given directory and archives its contens."""
         self._add_readme_to(input_directory)
         output_path = Path(shutil.make_archive(output, "zip", input_directory))
         return output_path
@@ -101,8 +104,8 @@ class Encoder:
     def _upload(self, input_file: Path) -> str:
         uploader = Uploader(browser=self._settings.browser)
         url = uploader.upload(
-            input_file = input_file,
-            title = self._metadata.filename,
-            description = self._metadata.export_as_base64()
+            input_file=input_file,
+            title=self._metadata.filename,
+            description=self._metadata.export_as_base64(),
         )
         return url

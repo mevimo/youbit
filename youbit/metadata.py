@@ -12,13 +12,14 @@ from youbit.settings import Settings
 class Metadata:
     _settings: Optional[Settings] = None
     filename: Optional[str] = None
-    md5_hash: Optional[str] = None 
+    md5_hash: Optional[str] = None
     youbit_version: str = version("youbit")
 
-    def __init__(self,
+    def __init__(
+        self,
         settings: Optional[Settings] = None,
         filename: Optional[str] = None,
-        md5_hash: Optional[str] = None
+        md5_hash: Optional[str] = None,
     ) -> None:
         self.settings = settings
         self.filename = filename
@@ -27,18 +28,10 @@ class Metadata:
 
     @staticmethod
     def create_from_base64(b64: str) -> Metadata:
-        return pickle.loads(
-            base64.b64decode(
-                bytes(b64, encoding="utf8")
-            )
-        )
+        return pickle.loads(base64.b64decode(bytes(b64, encoding="utf8")))
 
     def export_as_base64(self) -> str:
-        base64_string = base64.b64encode(
-            pickle.dumps(
-                self
-                )
-            ).decode("utf8")
+        base64_string = base64.b64encode(pickle.dumps(self)).decode("utf8")
         return base64_string
 
     @property

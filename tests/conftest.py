@@ -56,11 +56,11 @@ def pytest_addoption(parser: Any) -> None:
 def browser(request: Any) -> Browser:
     browser_str = request.config.getoption("--browser")
     browsers = {
-        'chrome': Browser.CHROME,
-        'firefox': Browser.FIREFOX,
-        'opera': Browser.OPERA,
-        'brave': Browser.BRAVE,
-        'chromium': Browser.CHROMIUM,
-        'edge': Browser.EDGE
+        "chrome": Browser.CHROME,
+        "firefox": Browser.FIREFOX,
+        "opera": Browser.OPERA,
+        "brave": Browser.BRAVE,
+        "chromium": Browser.CHROMIUM,
+        "edge": Browser.EDGE,
     }
     return browsers[browser_str]

@@ -14,7 +14,7 @@ def pixels_to_bytes(arr: ndarr_1d_uint8, bpp: BitsPerPixel) -> ndarr_1d_uint8:
         raise ValueError(
             f"The length of the given array ({arr.size}) is not a factor of 8."
         )
-    
+
     sub_functions = {
         BitsPerPixel.ONE: _detransform_bpp1,
         BitsPerPixel.TWO: _detransform_bpp2,

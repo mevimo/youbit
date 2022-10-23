@@ -86,5 +86,5 @@ def analyze_gop(file: Union[str, Path]) -> dict[str, Any]:
             "gop_size": gop_size,
             "gop_count": len(gops),
             "gop_lengths": gop_lengths,
-            "gops": gops
+            "gops": gops,
         }

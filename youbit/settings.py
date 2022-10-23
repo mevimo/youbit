@@ -26,20 +26,21 @@ class Browser(str, Enum):
 
 @dataclass
 class Settings:
-    resolution: Resolution = Resolution.HD,
-    bits_per_pixel: BitsPerPixel = BitsPerPixel.ONE,
-    ecc_symbols: int = 32,
-    constant_rate_factor: int = 18,
-    null_frames: bool = False,
+    resolution: Resolution = (Resolution.HD,)
+    bits_per_pixel: BitsPerPixel = (BitsPerPixel.ONE,)
+    ecc_symbols: int = (32,)
+    constant_rate_factor: int = (18,)
+    null_frames: bool = (False,)
     browser: Optional[Browser] = None
-    
-    def __init__(self,
+
+    def __init__(
+        self,
         resolution: Resolution = Resolution.HD,
         bits_per_pixel: BitsPerPixel = BitsPerPixel.ONE,
         ecc_symbols: int = 32,
         constant_rate_factor: int = 18,
         null_frames: bool = False,
-        browser: Optional[Browser] = None
+        browser: Optional[Browser] = None,
     ) -> None:
         self.resolution = resolution
         self.bits_per_pixel = bits_per_pixel

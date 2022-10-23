@@ -15,7 +15,6 @@ from youbit.settings import Settings
 
 
 class VideoEncoder:
-
     def __init__(self, output: Path, settings: Settings) -> None:
         self.cache = np.empty(0, dtype=np.uint8)
         self.null_frames = settings.null_frames
@@ -30,8 +29,7 @@ class VideoEncoder:
         }
 
     def feed(self, arr: ndarr_1d_uint8) -> None:
-        """Each element of the input array is expected to represent one geyscale pixel.
-        """
+        """Each element of the input array is expected to represent one geyscale pixel."""
         arr_of_frames = self._prepare_array(arr)
         for frame in arr_of_frames:
             av_frame = av.VideoFrame.from_ndarray(frame, format="gray")
@@ -42,13 +40,15 @@ class VideoEncoder:
     def _prepare_array(self, arr_correct_size: ndarr_1d_uint8) -> np.ndarray:
         arr_with_cache = self._prepend_cache_to(arr_correct_size)
         arr_correct_size = self._cache_surplus_elem_from(arr_with_cache)
-        reshaped_arr = arr_correct_size.reshape(-1, self.stream.height, self.stream.width)
+        reshaped_arr = arr_correct_size.reshape(
+            -1, self.stream.height, self.stream.width
+        )
         return reshaped_arr
 
     def _prepend_cache_to(self, arr: ndarr_1d_uint8) -> ndarr_1d_uint8:
         if self.cache.size:
             new_arr = np.append(self.cache, arr)
-            self.cache = np.empty(0, dtype = np.uint8)
+            self.cache = np.empty(0, dtype=np.uint8)
             return new_arr
         return arr
 
@@ -61,9 +61,7 @@ class VideoEncoder:
         return arr
 
     def _inject_null_frame(self) -> None:
-        null_frame = np.zeros(
-            (self.stream.height, self.stream.width), np.uint8
-        )
+        null_frame = np.zeros((self.stream.height, self.stream.width), np.uint8)
         frame = av.VideoFrame.from_ndarray(null_frame, format="gray")
         self.container.mux(self.stream.encode(frame))
 
@@ -74,8 +72,7 @@ class VideoEncoder:
         self.close()
 
     def close(self) -> None:
-        """Flushes the cache and closes the container. Must happen!
-        """
+        """Flushes the cache and closes the container. Must happen!"""
         if self.cache.size:
             padding_size = self.framesize - (self.cache.size % self.framesize)
             padding_arr = np.zeros(padding_size, dtype=self.cache.dtype)
@@ -123,7 +120,7 @@ class VideoDecoder:
                 frames.append(next(self.frames))
             except StopIteration:
                 break
-        
+
         if len(frames) == 0:
             return np.empty(0, dtype=np.uint8)
 
@@ -147,8 +144,7 @@ class VideoDecoder:
             frames = self.container.decode(self.stream)
             frames = islice(frames, None, None, 6)
             frame_generator = (
-                frame.to_ndarray(format="gray").ravel()
-                for frame in frames
+                frame.to_ndarray(format="gray").ravel() for frame in frames
             )
         else:
             raise RuntimeError(

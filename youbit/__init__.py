@@ -2,6 +2,7 @@
 YouBit: host any type of file on YouTube.
 """
 from importlib.metadata import version
+
 __title__ = "youbit"
 __version__ = version("youbit")
 __author__ = "Florian Laporte <florianl@florianl.dev>"
@@ -21,10 +22,4 @@ from .tempdir import TempDir
 from .ecc import ecc
 
 
-__all__ = [
-    "Encoder",
-    "download_and_decode",
-    "decode_local",
-    "Settings",
-    "Metadata"
-]
+__all__ = ["Encoder", "download_and_decode", "decode_local", "Settings", "Metadata"]

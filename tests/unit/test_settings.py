@@ -21,6 +21,7 @@ def test_setters_valid_settings():
     settings.null_frames = True
     settings.browser = Browser.CHROME
 
+
 def test_setters_invalid_settings():
     settings = Settings()
 

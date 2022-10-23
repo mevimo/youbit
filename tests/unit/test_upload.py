@@ -10,7 +10,9 @@ from youbit.settings import Browser
 from tests.conftest import uploads
 
 
-C_TEST_VIDEO_PATH = Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_video.mp4"
+C_TEST_VIDEO_PATH = (
+    Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_video.mp4"
+)
 
 
 @uploads

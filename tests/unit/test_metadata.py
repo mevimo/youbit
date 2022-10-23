@@ -24,11 +24,7 @@ def test_metadata_creation_fail() -> None:
 
 
 def test_metadata_export() -> None:
-    metadata = Metadata(
-        filename = "test",
-        md5_hash = "test",
-        settings = Settings()
-    )
+    metadata = Metadata(filename="test", md5_hash="test", settings=Settings())
     export_str = metadata.export_as_base64()
     assert export_str
     assert isinstance(export_str, str)

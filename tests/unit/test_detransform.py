@@ -43,7 +43,7 @@ def test_pixels_to_bytes(test_arr: ndarr_1d_uint8) -> None:
     solutions = {
         BitsPerPixel.ONE: solution_bpp1,
         BitsPerPixel.TWO: solution_bpp2,
-        BitsPerPixel.THREE: solution_bpp3
+        BitsPerPixel.THREE: solution_bpp3,
     }
 
     for bpp in BitsPerPixel:
@@ -51,4 +51,3 @@ def test_pixels_to_bytes(test_arr: ndarr_1d_uint8) -> None:
         desired_size = int(test_arr.size / 8) * bpp.value
         assert output.size == desired_size
         np.testing.assert_array_equal(output, solutions[bpp])
-        
