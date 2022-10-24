@@ -10,7 +10,7 @@ from youbit.settings import Browser
 from tests.conftest import uploads
 
 
-C_TEST_VIDEO_PATH = (
+TEST_VIDEO_PATH = (
     Path(os.path.dirname(__file__)) / "testdata" / "files" / "test_video.mp4"
 )
 
@@ -31,7 +31,7 @@ def test_upload(browser: Browser) -> None:
     title = "unittest_title"
     desc = "unittest_desc"
     uploader = Uploader(browser)
-    url = uploader.upload(C_TEST_VIDEO_PATH, title=title, description=desc)
+    url = uploader.upload(TEST_VIDEO_PATH, title=title, description=desc)
     assert url
     request = requests.get(url)
     assert request.status_code == 200

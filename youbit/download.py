@@ -12,7 +12,7 @@ from youbit.metadata import Metadata
 
 
 class Downloader:
-    C_YTDL_BASE_OPTIONS = {
+    YTDL_BASE_OPTIONS = {
         "logtostderr": True,
         "restrictfilenames": True,
         "windowsfilenames": True,
@@ -35,7 +35,7 @@ class Downloader:
         return best_format.get("vbr")
 
     def download(self, output: Path) -> None:
-        ytdl_options = self.C_YTDL_BASE_OPTIONS.copy()
+        ytdl_options = self.YTDL_BASE_OPTIONS.copy()
         ytdl_options.update(
             {
                 "paths": {"home": str(output)},
@@ -50,7 +50,7 @@ class Downloader:
 
     def _get_video_metadata(self) -> dict:
         with open(os.devnull, "wb") as devnull, redirect_stderr(devnull):
-            with YoutubeDL(self.C_YTDL_BASE_OPTIONS.copy()) as ydl:
+            with YoutubeDL(self.YTDL_BASE_OPTIONS.copy()) as ydl:
                 video_metadata = ydl.extract_info(self.url, download=False)
         return video_metadata
 

@@ -15,13 +15,13 @@ def pixels_to_bytes(arr: ndarr_1d_uint8, bpp: BitsPerPixel) -> ndarr_1d_uint8:
             f"The length of the given array ({arr.size}) is not a factor of 8."
         )
 
-    sub_functions = {
+    SUB_FUNCTIONS = {
         BitsPerPixel.ONE: _detransform_bpp1,
         BitsPerPixel.TWO: _detransform_bpp2,
         BitsPerPixel.THREE: _detransform_bpp3,
     }
 
-    output = sub_functions[bpp](arr)
+    output = SUB_FUNCTIONS[bpp](arr)
     return output
 
 

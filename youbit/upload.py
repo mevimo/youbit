@@ -21,10 +21,10 @@ import browser_cookie3
 from youbit.settings import Browser
 
 
-C_YOUTUBE_URL = "https://www.youtube.com"
-C_YOUTUBE_STUDIO_URL = "https://studio.youtube.com"
-C_SLEEP_COEFFICIENT = 1
-C_XPATH_UPLOAD_STATUS = (
+YOUTUBE_URL = "https://www.youtube.com"
+YOUTUBE_STUDIO_URL = "https://studio.youtube.com"
+SLEEP_COEFFICIENT = 1
+XPATH_UPLOAD_STATUS = (
     "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/"
     "ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span"
 )
@@ -55,7 +55,7 @@ class Uploader:
         self._inject_youtube_consent_cookie()
 
     def upload(self, input_file: Path, description: str, title: str) -> str:
-        self.browser.get(C_YOUTUBE_STUDIO_URL)
+        self.browser.get(YOUTUBE_STUDIO_URL)
         self._sleep_long()
 
         self.browser.find_element(By.ID, "upload-icon").click()
@@ -85,11 +85,11 @@ class Uploader:
             Browser.OPERA: browser_cookie3.opera,
             Browser.EDGE: browser_cookie3.edge,
             Browser.CHROMIUM: browser_cookie3.chromium,
-            Browser.BRAVE: browser_cookie3.brave,
+            Browser.BRAVE: browser_cookie3.brave
         }
         cookiejar = supported_browsers[browser]()
 
-        self.browser.get(C_YOUTUBE_URL)
+        self.browser.get(YOUTUBE_URL)
         for cookie in cookiejar:
             if cookie.domain == ".youtube.com":
                 self.browser.add_cookie(
@@ -146,7 +146,7 @@ class Uploader:
         return video_url
 
     def _wait_for_upload_finish(self) -> None:
-        status = self.browser.find_element(By.XPATH, C_XPATH_UPLOAD_STATUS)
+        status = self.browser.find_element(By.XPATH, XPATH_UPLOAD_STATUS)
         while "Uploading" in status.text:
             time.sleep(0.5)
 
@@ -165,7 +165,7 @@ class Uploader:
         WebDriverWait(self.browser, timeout=20).until(last_dialog_available)
 
     def _sleep_short(self) -> None:
-        time.sleep(0.5 * C_SLEEP_COEFFICIENT)
+        time.sleep(0.5 * SLEEP_COEFFICIENT)
 
     def _sleep_long(self) -> None:
-        time.sleep(1 * C_SLEEP_COEFFICIENT)
+        time.sleep(1 * SLEEP_COEFFICIENT)

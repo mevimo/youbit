@@ -9,18 +9,18 @@ from youbit.settings import Settings
 from tests.conftest import long
 
 
-C_TEST_VIDEO_URL = "https://www.youtube.com/watch?v=dnhlx48t-h4"
+TEST_VIDEO_URL = "https://www.youtube.com/watch?v=dnhlx48t-h4"
 
 
 @long
 def test_best_vbr() -> None:
-    downloader = Downloader(C_TEST_VIDEO_URL)
+    downloader = Downloader(TEST_VIDEO_URL)
     assert downloader.best_vbr > 0
 
 
 @long
 def test_youbit_metadata() -> None:
-    downloader = Downloader(C_TEST_VIDEO_URL)
+    downloader = Downloader(TEST_VIDEO_URL)
     assert isinstance(downloader.youbit_metadata, Metadata)
 
 
@@ -29,7 +29,7 @@ def test_download(tempdir: Path) -> None:
     """WHEN we use a Downloader object to download a YouTube video.
     THEN check if download succeeds and extracted metadata is correct.
     """
-    downloader = Downloader(C_TEST_VIDEO_URL)
+    downloader = Downloader(TEST_VIDEO_URL)
     output_path = tempdir / "video.mp4"
     downloader.download(output_path)
     assert output_path.exists()
