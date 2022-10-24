@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Optional
 from enum import Enum, auto
 
 
@@ -15,7 +15,7 @@ class BitsPerPixel(Enum):
     THREE = 3
 
 
-class Browser(str, Enum):
+class Browser(Enum):
     CHROME = auto()
     FIREFOX = auto()
     OPERA = auto()
@@ -26,12 +26,12 @@ class Browser(str, Enum):
 
 @dataclass
 class Settings:
-    resolution: Resolution = (Resolution.HD,)
-    bits_per_pixel: BitsPerPixel = (BitsPerPixel.ONE,)
-    ecc_symbols: int = (32,)
-    constant_rate_factor: int = (18,)
-    null_frames: bool = (False,)
-    browser: Optional[Browser] = None
+    _resolution: Resolution = Resolution.HD
+    _bits_per_pixel: BitsPerPixel = BitsPerPixel.ONE
+    _ecc_symbols: int = 32
+    _constant_rate_factor: int = 18
+    _null_frames: bool = False
+    _browser: Optional[Browser] = None
 
     def __init__(
         self,
