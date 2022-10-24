@@ -1,12 +1,13 @@
 """
-Everything concerning the upload process.
+Uploads videos to YouTube using Selenium.
 """
 import time
-from typing import Any, Union
 from pathlib import Path
 import logging
 
 from selenium import webdriver
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -17,41 +18,23 @@ from selenium.webdriver.support.expected_conditions import element_to_be_clickab
 from webdriver_manager.chrome import ChromeDriverManager
 import browser_cookie3
 
+from youbit.settings import Browser
 
-C_SLEEP_COEFFICIENT = 1
-C_XPATH_UPLOAD_STATUS = (
+
+YOUTUBE_URL = "https://www.youtube.com"
+YOUTUBE_STUDIO_URL = "https://studio.youtube.com"
+SLEEP_COEFFICIENT = 1
+XPATH_UPLOAD_STATUS = (
     "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/"
     "ytcp-animatable[2]/div/div[1]/ytcp-video-upload-progress/span"
 )
 
 
 class Uploader:
-    """Uploads a video to YouTube. Uses a selenium browser instance to do this.
-    For authentication, cookies are extracted from the user's browser of choice.
-    The currently logged in account in that browser will be used for upload.
-    Make sure have gone to 'studio.youtube.com' with the account you wish to use, before
-    using this. It will not traverse dialogue popups that you might encounter while going
-    there for the first time, such as the one that asks for a channel name.
-    Make sure there are no popups about anything when you go to 'studio.youtube.com'
-    on the account in question.
-    """
-
     def __init__(
-        self, browser: str, headless: bool = True, suppress: bool = True
+        self, browser: Browser, headless: bool = True, suppress: bool = True
     ) -> None:
-        """Initiliazes the selenium webdriver and injects it with the proper cookies.
-
-        :param browser: The browser to extract YouTube cookies from. The currently logged in
-            account will be used for upload. Supported arguments are 'chrome', 'firefox',
-            'opera', 'edge', 'chromium', and 'brave'.
-        :type browser: str
-        :param headless: Hide the browser windows, defaults to True
-        :type headless: bool, optional
-        :param suppress: Suppress selenium stdout, defaults to True
-        :type suppress: bool, optional
-        :raises ValueError: If the passed 'browser' argument is not recognized.
-        """
-        options: Any = Options()
+        options: Options = Options()
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
         if suppress:
@@ -64,24 +47,49 @@ class Uploader:
             )
         logging.getLogger("WDM").setLevel(
             logging.NOTSET
-        )  # Turns off the webdriver_manager logging
+        )  # Turns off logging from webdriver_manager
         service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=service, options=options)
 
-        supported = {
-            "chrome": browser_cookie3.chrome,
-            "firefox": browser_cookie3.firefox,
-            "opera": browser_cookie3.opera,
-            "edge": browser_cookie3.edge,
-            "chromium": browser_cookie3.chromium,
-            "brave": browser_cookie3.brave,
-        }
-        if (x := supported.get(browser.lower())):
-            cookiejar = x()
-        else:
-            raise ValueError(f"Unsupported browser: {browser}")
+        self._inject_user_cookies(browser)
+        self._inject_youtube_consent_cookie()
 
-        self.browser.get("https://www.youtube.com")
+    def upload(self, input_file: Path, description: str, title: str) -> str:
+        self.browser.get(YOUTUBE_STUDIO_URL)
+        self._sleep_long()
+
+        self.browser.find_element(By.ID, "upload-icon").click()
+        self._insert_video_file(input_file)
+        self._insert_video_title(title)
+        self._insert_video_description(description)
+        self._set_not_for_kids()
+
+        for _ in range(3):
+            self.browser.find_element(By.ID, "next-button").click()
+
+        self._sleep_short()
+        self._set_video_as_unlisted()
+        video_url = self._get_video_url()
+        self._wait_for_upload_finish()
+        self._click_done_btn()
+
+        self._wait_until_last_dialog_available()
+        self._sleep_short()
+        self.browser.quit()
+        return video_url
+
+    def _inject_user_cookies(self, browser: Browser) -> None:
+        supported_browsers = {
+            Browser.CHROME: browser_cookie3.chrome,
+            Browser.FIREFOX: browser_cookie3.firefox,
+            Browser.OPERA: browser_cookie3.opera,
+            Browser.EDGE: browser_cookie3.edge,
+            Browser.CHROMIUM: browser_cookie3.chromium,
+            Browser.BRAVE: browser_cookie3.brave
+        }
+        cookiejar = supported_browsers[browser]()
+
+        self.browser.get(YOUTUBE_URL)
         for cookie in cookiejar:
             if cookie.domain == ".youtube.com":
                 self.browser.add_cookie(
@@ -91,6 +99,8 @@ class Uploader:
                         "domain": cookie.domain,
                     }
                 )
+
+    def _inject_youtube_consent_cookie(self) -> None:
         self.browser.add_cookie(
             {
                 "name": "CONSENT",
@@ -99,74 +109,63 @@ class Uploader:
             }
         )
 
-    def upload(
-        self,
-        filepath: Union[str, Path],
-        desc: str,
-        title: str,
-    ) -> str:
-        """Uploads a video to YouTube.
-
-        :param filepath: The file to upload.
-        :type filepath: str or Path
-        :param desc: The video description to use.
-        :type desc: str
-        :param title: The title to use for the video.
-        :type title: str, optional
-        :return: The url of the video.
-        :rtype: str
-        """
-        self.browser.get("https://studio.youtube.com/")
-        time.sleep(1*C_SLEEP_COEFFICIENT)
-        self.browser.find_element(By.ID, "upload-icon").click()
+    def _insert_video_file(self, input_file) -> None:
         self.browser.find_element(By.CSS_SELECTOR, 'input[name="Filedata"]').send_keys(
-            str(filepath)
+            str(input_file)
         )
-        title_element = WebDriverWait(self.browser, timeout=10).until(
-            lambda d: d.find_element(By.ID, "textbox")
+
+    def _insert_video_title(self, title: str) -> None:
+        title_element: WebElement = WebDriverWait(self.browser, timeout=10).until(
+            lambda driver: driver.find_element(By.ID, "textbox")
         )
-        time.sleep(0.5*C_SLEEP_COEFFICIENT)
+        self._sleep_short()
         title_element.send_keys(Keys.RETURN)
         title_element.send_keys(title)
 
-        # Using two tab's to get to the description textbox is probably
-        # a more reliable way than by convoluted CSS selector.
+    def _insert_video_description(self, description: str) -> None:
         ActionChains(self.browser).send_keys(Keys.TAB).send_keys(Keys.TAB).send_keys(
-            desc
+            description
         ).perform()
 
+    def _set_not_for_kids(self) -> None:
         not_for_kids = self.browser.find_element(By.NAME, "VIDEO_MADE_FOR_KIDS_NOT_MFK")
         not_for_kids.find_element(By.ID, "radioLabel").click()
 
-        self.browser.find_element(By.ID, "next-button").click()
-        self.browser.find_element(By.ID, "next-button").click()
-        self.browser.find_element(By.ID, "next-button").click()
-
-        time.sleep(0.1*C_SLEEP_COEFFICIENT)
+    def _set_video_as_unlisted(self) -> None:
         self.browser.find_element(By.NAME, "UNLISTED").find_element(
             By.ID, "radioLabel"
         ).click()
 
+    def _get_video_url(self) -> str:
         def url_not_empty(driver):
             return driver.find_element(
                 By.CSS_SELECTOR, ".video-url-fadeable > .ytcp-video-info"
             ).text
+
         video_url = WebDriverWait(self.browser, timeout=20).until(url_not_empty)
+        return video_url
 
-        status = self.browser.find_element(By.XPATH, C_XPATH_UPLOAD_STATUS)
+    def _wait_for_upload_finish(self) -> None:
+        status = self.browser.find_element(By.XPATH, XPATH_UPLOAD_STATUS)
         while "Uploading" in status.text:
-            time.sleep(0.5*C_SLEEP_COEFFICIENT)
+            time.sleep(0.5)
 
+    def _click_done_btn(self) -> None:
         done_btn = self.browser.find_element(By.ID, "done-button")
         WebDriverWait(self.browser, timeout=20).until(element_to_be_clickable(done_btn))
         done_btn.click()
 
-        def last_dialog_available(driver):
+    def _wait_until_last_dialog_available(self) -> None:
+        def last_dialog_available(driver: WebDriver):
             return driver.find_elements(
-                By.CSS_SELECTOR, 'tp-yt-paper-dialog > .header > .header-content > #dialog-title'
+                By.CSS_SELECTOR,
+                "tp-yt-paper-dialog > .header > .header-content > #dialog-title",
             )
+
         WebDriverWait(self.browser, timeout=20).until(last_dialog_available)
-        
-        time.sleep(0.5*C_SLEEP_COEFFICIENT)
-        self.browser.quit()
-        return video_url
+
+    def _sleep_short(self) -> None:
+        time.sleep(0.5 * SLEEP_COEFFICIENT)
+
+    def _sleep_long(self) -> None:
+        time.sleep(1 * SLEEP_COEFFICIENT)

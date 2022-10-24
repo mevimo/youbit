@@ -3,24 +3,11 @@ Utility functions for YouBit.
 """
 import re
 import hashlib
-import os
-import pickle
-import base64
 from pathlib import Path
 from typing import Union, Any
 
 import av
 import numpy as np
-
-
-def dict_to_b64(obj: dict[Any, Any]) -> str:
-    """Pickles a dictionary, encodes the output in a base64 string and returns the result."""
-    return base64.b64encode(pickle.dumps(obj)).decode("utf8")
-
-
-def b64_to_dict(b64: str) -> dict[Any, Any]:
-    """Decodes a base64 string, and unpickles it back to the original dictionary."""
-    return pickle.loads(base64.b64decode(bytes(b64, encoding="utf8")))
 
 
 def is_url(txt: str) -> bool:
@@ -31,12 +18,9 @@ def is_url(txt: str) -> bool:
     return False
 
 
-def get_md5(file: Union[str, Path]) -> str:
+def get_md5(file: Path) -> str:
     """Returns the MD5 checksum of the passed file."""
     with open(str(file), "rb") as f:
-        filesize = os.fstat(f.fileno()).st_size
-        if filesize > 8589934592:
-            raise ValueError("Files over 8GiB are currently not supported.")
         md5 = hashlib.md5()
         while True:
             data = f.read(65560)
@@ -102,5 +86,5 @@ def analyze_gop(file: Union[str, Path]) -> dict[str, Any]:
             "gop_size": gop_size,
             "gop_count": len(gops),
             "gop_lengths": gop_lengths,
-            "gops": gops
+            "gops": gops,
         }

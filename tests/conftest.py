@@ -1,12 +1,12 @@
 from pathlib import Path
-import shutil
-from typing import Any, Iterator
+from typing import Any
 
-import tempfile
 import numpy as np
 import pytest
 
 from youbit.types import ndarr_1d_uint8
+from youbit.tempdir import TempDir
+from youbit.settings import Browser
 
 
 uploads = pytest.mark.skipif(
@@ -22,10 +22,10 @@ def set_working_dir(request: Any, monkeypatch: Any) -> None:
 
 
 @pytest.fixture
-def tempdir() -> Iterator[Path]:
-    path = Path(tempfile.mkdtemp(prefix="youbit-test-"))
-    yield path
-    shutil.rmtree(path)
+def tempdir() -> Path:
+    tempdir = TempDir()
+    yield tempdir.path
+    tempdir.close()
 
 
 @pytest.fixture
@@ -53,5 +53,14 @@ def pytest_addoption(parser: Any) -> None:
 
 
 @pytest.fixture
-def cmd_browser(request: Any) -> Any:
-    return request.config.getoption("--browser")
+def browser(request: Any) -> Browser:
+    browser_str = request.config.getoption("--browser")
+    browsers = {
+        "chrome": Browser.CHROME,
+        "firefox": Browser.FIREFOX,
+        "opera": Browser.OPERA,
+        "brave": Browser.BRAVE,
+        "chromium": Browser.CHROMIUM,
+        "edge": Browser.EDGE,
+    }
+    return browsers[browser_str]

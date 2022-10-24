@@ -1,61 +1,111 @@
 """
-This file concerns itself with the transformation of binary data
-in such a way that it can be used as pixel-values in a picture or video.
+The main API of YouBit.
 """
-import numpy as np
-from numba import njit, prange
+from __future__ import annotations
+from typing import Union
+import gzip
+import shutil
+import os
+from pathlib import Path
 
-from youbit.types import ndarr_1d_uint8
-
-
-@njit("void(uint8[::1], uint8[::1], uint8[::1])", parallel=True)
-def _numba_transform_bpp1(arr, out, mapping) -> None:
-    for i in prange(out.size):
-        out[i] = mapping[arr[i]]
-
-
-@njit("void(uint8[::1], uint8[::1], uint8[::1])", parallel=True)
-def _numba_transform_bpp2(arr, out, mapping) -> None:
-    for i in prange(out.size):
-        j = i * 2
-        out[i] = mapping[(arr[j] << 1) | (arr[j + 1])]
+from youbit import util
+from youbit.ecc.ecc import apply_ecc
+from youbit.metadata import Metadata
+from youbit.settings import Settings
+from youbit.tempdir import TempDir
+from youbit.transform import bytes_to_pixels
+from youbit.upload import Uploader
+from youbit.video import VideoEncoder
 
 
-@njit("void(uint8[::1], uint8[::1], uint8[::1])", parallel=True)
-def _numba_transform_bpp3(arr, out, mapping) -> None:
-    for i in prange(out.size):
-        j = i * 3
-        out[i] = mapping[(arr[j] << 2) | (arr[j + 1] << 1) | (arr[j + 2])]
+class Encoder:
+    def __init__(
+        self, input_file: Union[Path, str], settings: Settings = Settings()
+    ) -> None:
+        input_file = Path(input_file)
+        if not input_file.exists() or not input_file.is_file():
+            raise ValueError(
+                f"Invalid input argument '{input_file}'. Must be a valid file location."
+            )
 
+        self._input_file = input_file
+        self._settings = settings
+        self._metadata = Metadata(
+            filename=str(self._input_file.name),
+            md5_hash=util.get_md5(self._input_file),
+            settings=self._settings,
+        )
 
-def transform_array(arr: ndarr_1d_uint8, bpp: int) -> ndarr_1d_uint8:
-    """Transforms a uint8 numpy array (0, 255, 38, ..) into a uint8 numpy array
-    representing 8 bit greyscale pixels in a YouBit video.
-    The output depends on the 'bpp' (or 'bits per pixel') parameter.
+    def encode_and_upload(self) -> str:
+        with TempDir() as tempdir:
+            video_temp_path = tempdir.path / "video.mp4"
+            self._encode(video_temp_path)
+            url = self._upload(video_temp_path)
+        return url
 
-    It does this by first unpacking the array into a binary representation of it
-    (essentially converting from decimal to binary, 65 -> 01000001).
-    It then groups consecutive binary digits into groups of {bpp}, before mapping
-    these groups to an appropriate pixel value.
+    def encode_local(self, output_dir: Union[Path, str]) -> Path:
+        output_dir = Path(output_dir)
+        if not output_dir.exists() or not output_dir.is_dir():
+            raise ValueError(f"'{output_dir}' is not a valid directory.")
 
-    IF bpp is 3 and the length of the given array is not a factor of 3, this function
-    will append 1 or 2 null bytes to the input array!
-    """
-    if bpp == 3 and (mod := arr.size % 3):
-        addition = np.zeros((3 - mod), dtype=np.uint8)
-        arr = np.append(arr, addition)
-    arr = np.unpackbits(arr)
-    div = int(arr.size / bpp)
-    out = np.zeros(div, dtype=np.uint8)
-    if bpp == 1:
-        mapping = np.array([0, 255], dtype=np.uint8)
-        _numba_transform_bpp1(arr, out, mapping)
-    elif bpp == 2:
-        mapping = np.array([0, 96, 160, 255], dtype=np.uint8)
-        _numba_transform_bpp2(arr, out, mapping)
-    elif bpp == 3:
-        mapping = np.array([0, 48, 80, 112, 144, 176, 208, 255], dtype=np.uint8)
-        _numba_transform_bpp3(arr, out, mapping)
-    else:
-        raise ValueError(f"Unsupported bpp argument: {bpp} of type {type(bpp)}.")
-    return out
+        with TempDir() as tempdir:
+            self._encode(tempdir.path / "video.mp4")
+            output_path = output_dir / ("YOUBIT-" + self._metadata.filename)
+            self._archive_dir_with_readme(tempdir.path, output_path)
+            return output_path
+
+    def _encode(self, output: Path) -> None:
+        tempdir = TempDir()
+        zipped_path = tempdir.path / "zipped.bin"
+        self._zip_file(zipped_path)
+
+        video_encoder = VideoEncoder(output, self._settings)
+        for chunk in self._read_chunks(zipped_path):
+            if self._settings.ecc_symbols:
+                chunk = apply_ecc(chunk, self._settings.ecc_symbols)
+            pixels = bytes_to_pixels(chunk, self._settings.bits_per_pixel)
+            video_encoder.feed(pixels)
+
+        video_encoder.close()
+        tempdir.close()
+
+    def _zip_file(self, output_path: Path) -> None:
+        with open(self._input_file, "rb") as f_in, gzip.open(
+            output_path, "wb"
+        ) as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    def _archive_dir_with_readme(self, input_directory: Path, output: Path) -> Path:
+        """Adds readme to given directory and archives its contens."""
+        self._add_readme_to(input_directory)
+        output_path = Path(shutil.make_archive(output, "zip", input_directory))
+        return output_path
+
+    def _add_readme_to(self, directory: Path) -> None:
+        """Adds a readme file to the given directory with information
+        about manual upload."""
+        from_path = Path(os.path.dirname(__file__)) / "data" / "README_upload.txt"
+        to_path = directory / "README.txt"
+        shutil.copy(from_path, to_path)
+        with open(to_path, "at") as readme:
+            readme.write(self._metadata.export_as_base64())
+
+    def _read_chunks(self, file: Path) -> bytes:
+        """Reads the input file in PROPERLY SIZED chunks, returning it in bytes.
+        This bytes object thus has a length that is a factor of (255 - ecc_symbols)!"""
+        chunk_size = (255 - self._settings.ecc_symbols) * 100_000  # See apply_ecc()
+        with open(file, "rb") as f:
+            while True:
+                binary_data = f.read(chunk_size)
+                if not binary_data:
+                    break
+                yield binary_data
+
+    def _upload(self, input_file: Path) -> str:
+        uploader = Uploader(browser=self._settings.browser)
+        url = uploader.upload(
+            input_file=input_file,
+            title=self._metadata.filename,
+            description=self._metadata.export_as_base64(),
+        )
+        return url
