@@ -26,7 +26,6 @@ black = "^22.3.0"
 pytest = "^7.1.2"
 Cython = "^0.29.30"
 setuptools = "^62.6.0"
-ipykernel = "^6.16.0"
 
 [tool.poetry.scripts]
 youbit = 'youbit:main'

@@ -6,11 +6,12 @@ The CLI of YouBit.
 from pathlib import Path
 import os
 from enum import Enum
+from importlib.metadata import version
 
 import typer
 
-
-app = typer.Typer(help="YouBit CLI", no_args_is_help=True, add_completion=False)
+youbit_version = version("youbit")
+app = typer.Typer(help=f"YouBit v{youbit_version}", no_args_is_help=True, add_completion=False)
 test_app = typer.Typer(no_args_is_help=True)
 app.add_typer(test_app, name="test")
 
