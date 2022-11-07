@@ -79,12 +79,12 @@ settings = Settings(browser=Browser.CHROME)
 encoder = Encoder('C:/myfile.txt', settings)
 url = encoder.encode_and_upload()
 ```
-
 ```py
 from youbit import download_and_decode
 
 filepath = download_and_decode('https://youtu.be/dQw4w9WgXcQ', 'C:/mydir/')
 ```
+<br>
 
 Encode without upload:
 ```py
@@ -93,6 +93,7 @@ from youbit import Encoder
 encoder = Encoder('C:/myfile.txt')
 filepath = encoder.encode_local('C:/mydirectory/')
 ```
+<br>
 
 Changing encoder settings:
 ```py
@@ -108,6 +109,7 @@ settings.null_frames = True
 
 encoder = Encoder('C:/myfile.txt', my_settings)
 ```
+<br>
 
 Decoding a *local* file a little trickier. You must know the settings that were used during the encoding process in order to succesfully decode it.
 You do this by passing a Metadata object to the decoding function. Your YouBit videos should have a base64 encoded string as their description.
@@ -127,7 +129,7 @@ filepath = decode_local('decode_me.mp4', 'C:/documents/', metadata)
 
 - [Does this mean infinite, free cloud storage?!](#does-this-mean-infinite-free-cloud-storage)
 - [Why no colors?](#why-no-colors)
-- [What is 'bpp'?](#what-is-bpp)
+- [What is 'Bits Per Pixel'?](#what-is-bits-per-pixel-bpp)
 - [Why a framerate of 1?](#why-a-framerate-of-1)
 - [Why not you use the YouTube API for uploads?](#why-not-use-the-youtube-api-for-uploads)
 - [After uploading, how long do I have to wait to download A YouBit video again?](#after-uploading-how-long-do-i-have-to-wait-to-download-a-youbit-video-again)
